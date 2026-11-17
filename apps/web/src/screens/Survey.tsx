@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
 import { askWriteAccess, haptic, showBackButton } from '../telegram';
 import type { Answer, Dictionaries } from '../types';
-import { BottomBar, Chip, navigate, Spinner } from '../ui';
+import { BottomBar, Chip, navigate, Spinner, useSingleFlight } from '../ui';
 
 let dictCache: Dictionaries | null = null;
 
@@ -39,7 +39,8 @@ export function Survey({ tripId }: { tripId: string }) {
 
   const toggle = (list: string[], key: string) => (list.includes(key) ? list.filter((k) => k !== key) : [...list, key]);
 
-  async function submit() {
+  const once = useSingleFlight();
+  const submit = () => once(async () => {
     setBusy(true);
     setError(null);
     try {
@@ -52,7 +53,7 @@ export function Survey({ tripId }: { tripId: string }) {
       setError(e instanceof ApiError ? e.message : 'Не удалось сохранить ответ');
       setBusy(false);
     }
-  }
+  });
 
   if (error && !loaded) return <p className="error-box center">{error}</p>;
   if (!dict || !loaded) return <Spinner />;

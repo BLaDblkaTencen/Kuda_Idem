@@ -3,7 +3,7 @@ import { api, ApiError } from '../api';
 import { haptic, openExternal } from '../telegram';
 import { useShare } from '../share';
 import type { Trip as TripData } from '../types';
-import { Avatar, BottomBar, navigate, plural, priceLabel, Spinner, useToast } from '../ui';
+import { Avatar, BottomBar, navigate, plural, priceLabel, Spinner, useSingleFlight, useToast } from '../ui';
 
 // Как часто экран спрашивает сервер о чужих изменениях (ответы, голоса).
 // Свои действия обновляют экран сразу, без ожидания.
@@ -12,14 +12,17 @@ const POLL_MS = 10_000;
 /** Загружает вылазку и обновляет её, пока друзья отвечают и голосуют. */
 function useTrip(id: string) {
   const [trip, setTrip] = useState<TripData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; notFound: boolean } | null>(null);
 
   const reload = useCallback(async () => {
     try {
       setTrip(await api.getTrip(id));
       setError(null);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Не удалось загрузить вылазку');
+      setError({
+        message: e instanceof ApiError ? e.message : 'Не удалось загрузить вылазку',
+        notFound: e instanceof ApiError && e.code === 'not_found',
+      });
     }
   }, [id]);
 
@@ -28,12 +31,12 @@ function useTrip(id: string) {
   }, [reload]);
 
   useEffect(() => {
-    if (trip?.status === 'decided') return;
+    if (trip?.status === 'decided' || error?.notFound) return; // дальше ничего не изменится
     const t = window.setInterval(() => {
       if (document.visibilityState === 'visible') void reload();
     }, POLL_MS);
     return () => window.clearInterval(t);
-  }, [reload, trip?.status]);
+  }, [reload, trip?.status, error?.notFound]);
 
   return { trip, setTrip, error, reload };
 }
@@ -42,9 +45,21 @@ export function Trip({ tripId }: { tripId: string }) {
   const { trip, setTrip, error, reload } = useTrip(tripId);
 
   if (!trip) {
+    if (error?.notFound) {
+      // Повтор здесь не поможет: ссылка неверная или вылазку удалили.
+      return (
+        <div className="card center">
+          <h2 className="place-name">Вылазка не найдена</h2>
+          <p className="muted">Проверьте ссылку или соберите свою.</p>
+          <button className="btn secondary" onClick={() => navigate({ name: 'create' })}>
+            Собрать вылазку
+          </button>
+        </div>
+      );
+    }
     return error ? (
       <div className="card center">
-        <p>{error}</p>
+        <p>{error.message}</p>
         <button className="btn secondary" onClick={() => void reload()}>
           Попробовать ещё раз
         </button>
@@ -81,7 +96,8 @@ function Collecting({ trip, setTrip }: StepProps) {
   const [busy, setBusy] = useState(false);
   const n = trip.participants.length;
 
-  async function suggest() {
+  const once = useSingleFlight();
+  const suggest = () => once(async () => {
     setBusy(true);
     try {
       setTrip(await api.suggest(trip.id));
@@ -92,7 +108,7 @@ function Collecting({ trip, setTrip }: StepProps) {
     } finally {
       setBusy(false);
     }
-  }
+  });
 
   return (
     <>
@@ -176,12 +192,12 @@ function Voting({ trip, setTrip }: StepProps) {
   const [busy, setBusy] = useState<string | null>(null);
   const [tieLeaders, setTieLeaders] = useState<number[] | null>(null);
 
-  async function run(key: string, action: () => Promise<TripData>) {
+  const once = useSingleFlight();
+  const run = (key: string, action: () => Promise<TripData>) => once(async () => {
     setBusy(key);
     try {
       setTrip(await action());
       setTieLeaders(null);
-      return true;
     } catch (e) {
       if (e instanceof ApiError && e.code === 'tie') {
         setTieLeaders((e.data.leaders as number[]) ?? []);
@@ -190,11 +206,10 @@ function Voting({ trip, setTrip }: StepProps) {
         haptic.error();
         toast(e instanceof ApiError ? e.message : 'Что-то пошло не так');
       }
-      return false;
     } finally {
       setBusy(null);
     }
-  }
+  });
 
   const voted = trip.suggestions.reduce((n, s) => n + s.voters.length, 0);
   const people = Math.max(trip.participants.length, voted);

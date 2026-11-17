@@ -61,13 +61,14 @@ export const FEATURES = {
 } as const;
 export type Feature = keyof typeof FEATURES;
 
-// Жёсткие ограничения участника: место либо обязано иметь тег, либо не должно его иметь.
+// Ограничения участника: место либо обязано иметь тег, либо не должно его иметь.
+// strict — правило не ослабляется никогда, даже если без него не подобрать ни одного места.
 export const CONSTRAINTS = {
   vegetarian: { label: 'вегетарианец', requires: 'vegetarian_menu' },
   no_alcohol: { label: 'не пью', requires: 'non_alcoholic_menu' },
-  under_18: { label: 'мне нет 18', forbids: 'adults_only' },
+  under_18: { label: 'мне нет 18', forbids: 'adults_only', strict: true },
   no_hookah: { label: 'без кальяна', forbids: 'hookah' },
-} as const satisfies Record<string, { label: string; requires?: Feature; forbids?: Feature }>;
+} as const satisfies Record<string, { label: string; requires?: Feature; forbids?: Feature; strict?: boolean }>;
 export type Constraint = keyof typeof CONSTRAINTS;
 export const CONSTRAINT_KEYS = Object.keys(CONSTRAINTS) as Constraint[];
 

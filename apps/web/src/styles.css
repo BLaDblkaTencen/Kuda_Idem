@@ -214,14 +214,6 @@ h1, h2, h3, p { margin: 0; }
 /* ---------- места ---------- */
 .place-name { font-size: 18px; font-weight: 700; line-height: 1.25; }
 .place-meta { color: var(--hint); font-size: 14px; }
-.why {
-  font-size: 14px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--accent-soft);
-}
-.votes-bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
-.votes-bar > div { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; }
 .price { font-weight: 600; white-space: nowrap; }
 
 /* голосование: карточка без лишнего — голоса, карта и кнопка одной строкой */

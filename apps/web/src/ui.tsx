@@ -2,6 +2,23 @@ import { createContext, useCallback, useContext, useRef, useState, type ReactNod
 import { haptic } from './telegram';
 import type { Person } from './types';
 
+/**
+ * Защита от двойного нажатия: пока действие выполняется, повторный вызов ничего не делает.
+ * Кнопка выключается через состояние busy, но второй тап может успеть раньше перерисовки.
+ */
+export function useSingleFlight() {
+  const running = useRef(false);
+  return useCallback(async (action: () => Promise<void>): Promise<void> => {
+    if (running.current) return;
+    running.current = true;
+    try {
+      await action();
+    } finally {
+      running.current = false;
+    }
+  }, []);
+}
+
 // ---------- навигация (hash-роутер на три экрана) ----------
 
 export type Route = { name: 'create' } | { name: 'trip'; id: string } | { name: 'survey'; id: string };

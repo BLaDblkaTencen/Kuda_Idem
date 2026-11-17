@@ -139,6 +139,18 @@ describe('matchPlaces', () => {
     expect(res[0]!.explanation).toContain('не совпало');
   });
 
+  it('правило «мне нет 18» не ослабляется, даже если иначе мест нет', () => {
+    const adultsOnly = places.filter((p) => p.features.includes('adults_only'));
+    expect(adultsOnly.length).toBeGreaterThan(0);
+    const res = matchPlaces({ places: adultsOnly, answers: [answer({ constraints: ['under_18'] })], startsAt: FRIDAY_EVENING });
+    expect(res).toEqual([]);
+    // а нестрогое ограничение ослабляется, если без этого ничего не подобрать
+    const noVeg = places.filter((p) => !p.features.includes('vegetarian_menu') && !p.features.includes('adults_only'));
+    const relaxed = matchPlaces({ places: noVeg, answers: [answer({ constraints: ['vegetarian'] })], startsAt: FRIDAY_EVENING });
+    expect(relaxed.length).toBeGreaterThan(0);
+    expect(relaxed[0]!.relaxed).toContain('constraints');
+  });
+
   it('предпочитает район участников', () => {
     const res = matchPlaces({
       places,

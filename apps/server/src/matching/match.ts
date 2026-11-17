@@ -124,11 +124,13 @@ export function groupBudgetCap(answers: MatchAnswer[]): number | null {
   return budgets.length ? Math.min(...budgets) : null;
 }
 
-function violatesConstraints(place: MatchPlace, answers: MatchAnswer[]): boolean {
+/** onlyStrict — проверить только строгие ограничения (например, «мне нет 18»). */
+function violatesConstraints(place: MatchPlace, answers: MatchAnswer[], onlyStrict = false): boolean {
   return answers.some((a) =>
     a.constraints.some((c) => {
-      const rule = CONSTRAINTS[c as Constraint] as { requires?: Feature; forbids?: Feature } | undefined;
+      const rule = CONSTRAINTS[c as Constraint] as { requires?: Feature; forbids?: Feature; strict?: boolean } | undefined;
       if (!rule) return false;
+      if (onlyStrict && !rule.strict) return false;
       if (rule.requires && !place.features.includes(rule.requires)) return true;
       if (rule.forbids && place.features.includes(rule.forbids)) return true;
       return false;
@@ -159,7 +161,8 @@ function passesFilters(
   const cap = groupBudgetCap(answers);
   if (!relaxed.has('budget') && cap !== null && place.avgCheck > cap * BUDGET_TOLERANCE) return false;
   if (!relaxed.has('group_size') && place.maxGroupSize < Math.max(1, answers.length)) return false;
-  if (!relaxed.has('constraints') && violatesConstraints(place, answers)) return false;
+  // Строгие ограничения («мне нет 18») действуют всегда, остальные можно ослабить.
+  if (violatesConstraints(place, answers, relaxed.has('constraints'))) return false;
   return true;
 }
 

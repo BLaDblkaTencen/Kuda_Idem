@@ -45,30 +45,40 @@ console.log(`   ответили: ${trip.participants.map((p: any) => p.firstNam
 
 step('4–5. Маша запускает подбор');
 trip = await call(masha, 'POST', `/api/trips/${trip.id}/suggest`);
-for (const s of trip.suggestions) console.log(`   • ${s.place.name} — ${s.explanation}`);
+for (const s of trip.suggestions) console.log(`   • ${s.place.title} — ${s.explanation}`);
 
-step('5. «Другие варианты»');
-trip = await call(masha, 'POST', `/api/trips/${trip.id}/suggest`);
-for (const s of trip.suggestions) console.log(`   • ${s.place.name} — ${s.explanation}`);
+step('5. «Другие варианты» двойным нажатием — оба запроса без ошибки');
+const [r1, r2] = await Promise.all([
+  call(masha, 'POST', `/api/trips/${trip.id}/suggest`),
+  call(masha, 'POST', `/api/trips/${trip.id}/suggest`),
+]);
+trip = r2.round >= r1.round ? r2 : r1;
+console.log(`   раунды ответов: ${r1.round} и ${r2.round}`);
+for (const s of trip.suggestions) console.log(`   • ${s.place.title} — ${s.explanation}`);
 
 step('6. Голосование');
-const [a, b] = trip.suggestions.map((s: any) => s.place.id);
+const [a, b = a] = trip.suggestions.map((s: any) => s.place.id); // в последнем раунде может остаться одно место
 await call(masha, 'POST', `/api/trips/${trip.id}/vote`, { placeId: a });
 await call(petya, 'POST', `/api/trips/${trip.id}/vote`, { placeId: a });
 trip = await call(dima, 'POST', `/api/trips/${trip.id}/vote`, { placeId: b });
-for (const s of trip.suggestions) console.log(`   ${s.votes} гол. — ${s.place.name}`);
+for (const s of trip.suggestions) console.log(`   ${s.votes} гол. — ${s.place.title}`);
 
 step('Проверка прав: Петя не может завершить голосование');
-try {
-  await call(petya, 'POST', `/api/trips/${trip.id}/finish`);
-  throw new Error('ожидали отказ 403');
-} catch (e) {
-  console.log(`   ок: ${(e as Error).message.includes('403') ? 'отказано (403)' : (e as Error).message}`);
-}
+const refused = await call(petya, 'POST', `/api/trips/${trip.id}/finish`).then(
+  () => false,
+  (e: Error) => e.message.includes('→ 403'),
+);
+if (!refused) throw new Error('Петя смог завершить голосование или ошибка не 403 — права не работают');
+console.log('   ок: отказано (403)');
 
-step('7. Маша завершает голосование');
-trip = await call(masha, 'POST', `/api/trips/${trip.id}/finish`);
-console.log(`   Идём: ${trip.chosenPlace.name}, ${trip.startsAtLabel}`);
+step('7. Маша завершает голосование (двойным нажатием)');
+const [f1, f2] = await Promise.all([
+  call(masha, 'POST', `/api/trips/${trip.id}/finish`),
+  call(masha, 'POST', `/api/trips/${trip.id}/finish`),
+]);
+if (f1.chosenPlace?.id !== f2.chosenPlace?.id) throw new Error('двойное завершение дало разные итоги');
+trip = f1;
+console.log(`   Идём: ${trip.chosenPlace.title}, ${trip.startsAtLabel}`);
 console.log(`   Маршрут: ${trip.chosenPlace.mapsUrl}`);
 
 console.log('\nСценарий пройден целиком.');

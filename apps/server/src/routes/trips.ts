@@ -1,5 +1,5 @@
 import { Hono, type Context } from 'hono';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { db } from '../db/client.js';
@@ -77,7 +77,7 @@ const person = (u: typeof users.$inferSelect) => ({ id: u.id, firstName: u.first
 
 /** Всё, что нужно экрану вылазки, одним ответом. */
 async function tripView(trip: Trip, userId: number) {
-  const [organizer, answers, suggestions, tally, allVotes, chosen, link] = await Promise.all([
+  const [organizer, answers, suggestions, allVotes, chosen, link] = await Promise.all([
     db.query.users.findFirst({ where: eq(users.id, trip.organizerId) }),
     db
       .select({ answer: tripAnswers, user: users })
@@ -85,7 +85,6 @@ async function tripView(trip: Trip, userId: number) {
       .innerJoin(users, eq(users.id, tripAnswers.userId))
       .where(eq(tripAnswers.tripId, trip.id)),
     currentSuggestions(trip),
-    voteTally(trip.id),
     db
       .select({ placeId: votes.placeId, user: users })
       .from(votes)
@@ -103,17 +102,15 @@ async function tripView(trip: Trip, userId: number) {
     startsAt: trip.startsAt.toISOString(),
     startsAtLabel: formatTripDate(trip.startsAt),
     isOrganizer: trip.organizerId === userId,
-    organizer: organizer && { id: organizer.id, firstName: organizer.firstName, photoUrl: organizer.photoUrl },
+    organizer: organizer && person(organizer),
     participants: answers.map((a) => person(a.user)),
     myAnswer: mine
       ? { budget: mine.budget, moods: mine.moods, district: mine.district, constraints: mine.constraints }
       : null,
-    suggestions: suggestions.map((s) => ({
-      place: placeCard(s.place),
-      explanation: s.suggestion.explanation,
-      votes: tally.get(s.place.id) ?? 0,
-      voters: allVotes.filter((v) => v.placeId === s.place.id).map((v) => person(v.user)),
-    })),
+    suggestions: suggestions.map((s) => {
+      const voters = allVotes.filter((v) => v.placeId === s.place.id).map((v) => person(v.user));
+      return { place: placeCard(s.place), explanation: s.suggestion.explanation, votes: voters.length, voters };
+    }),
     myVote: allVotes.find((v) => v.user.id === userId)?.placeId ?? null,
     chosenPlace: chosen ? placeCard(chosen) : null,
     link,
@@ -201,8 +198,18 @@ tripRoutes.post('/:id/suggest', async (c) => {
   const round = trip.round + 1;
   await db
     .insert(tripSuggestions)
-    .values(results.map((r, i) => ({ tripId: id, placeId: r.placeId, round, rank: i, explanation: r.explanation })));
-  const [updated] = await db.update(trips).set({ round, status: 'voting' }).where(eq(trips.id, id)).returning();
+    .values(results.map((r, i) => ({ tripId: id, placeId: r.placeId, round, rank: i, explanation: r.explanation })))
+    .onConflictDoNothing(); // двойное нажатие: второй запрос подобрал те же места
+  // Раунд переключается, только если его ещё никто не переключил (защита от двойного нажатия).
+  const [updated] = await db
+    .update(trips)
+    .set({ round, status: 'voting' })
+    .where(and(eq(trips.id, id), eq(trips.round, trip.round), ne(trips.status, 'decided')))
+    .returning();
+  if (!updated) {
+    const current = await loadTrip(id);
+    return current ? c.json(await tripView(current, user.id)) : fail(c, 404, 'not_found', 'Вылазка не найдена');
+  }
   await db.delete(votes).where(eq(votes.tripId, id)); // новая тройка — голосуем заново
 
   await track(round === 1 ? 'suggestions_generated' : 'more_options_requested', {
@@ -244,6 +251,8 @@ tripRoutes.post('/:id/finish', async (c) => {
   const trip = await loadTrip(id);
   if (!trip) return fail(c, 404, 'not_found', 'Вылазка не найдена');
   if (trip.organizerId !== user.id) return fail(c, 403, 'forbidden', 'Завершает организатор');
+  // Повторное нажатие после завершения — просто показываем итог, без ошибки и без новой рассылки.
+  if (trip.status === 'decided') return c.json(await tripView(trip, user.id));
   if (trip.status !== 'voting') return fail(c, 409, 'not_voting', 'Сейчас голосование не идёт');
 
   const options = (await currentSuggestions(trip)).map((o) => o.place.id);
@@ -264,11 +273,17 @@ tripRoutes.post('/:id/finish', async (c) => {
     return fail(c, 409, 'tie', 'Ничья — выберите место сами', { leaders });
   }
 
+  // Только если голосование ещё идёт: при двойном нажатии второй запрос ничего не изменит
+  // и не разошлёт карточки повторно.
   const [updated] = await db
     .update(trips)
     .set({ status: 'decided', chosenPlaceId: chosenId, decidedAt: new Date() })
-    .where(eq(trips.id, id))
+    .where(and(eq(trips.id, id), eq(trips.status, 'voting')))
     .returning();
+  if (!updated) {
+    const current = await loadTrip(id);
+    return current ? c.json(await tripView(current, user.id)) : fail(c, 404, 'not_found', 'Вылазка не найдена');
+  }
   const by = max > 0 && leaders.length === 1 ? 'vote' : 'organizer';
   await track('place_chosen', { userId: user.id, tripId: id, props: { placeId: chosenId, round: trip.round, by } });
   // Карточки рассылаются после ответа: организатору не нужно ждать, пока бот напишет всем.

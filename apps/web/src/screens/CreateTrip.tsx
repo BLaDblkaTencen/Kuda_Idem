@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '../api';
 import { useShare } from '../share';
 import { haptic } from '../telegram';
-import { BottomBar, navigate } from '../ui';
+import { BottomBar, navigate, useSingleFlight } from '../ui';
 
 const QUICK_TIMES = ['18:00', '19:00', '20:00', '21:00', '22:00'];
 const DAYS_AHEAD = 7;
@@ -61,6 +61,7 @@ export function CreateTrip() {
   const [error, setError] = useState<string | null>(null);
   const minutesRef = useRef<HTMLInputElement>(null);
   const share = useShare();
+  const once = useSingleFlight();
 
   const complete = hh.length === 2 && mm.length === 2 && Number(hh) <= 23 && Number(mm) <= 59;
   const time = `${hh}:${mm}`;
@@ -85,7 +86,7 @@ export function CreateTrip() {
     setMm(t.slice(3));
   }
 
-  async function create() {
+  const create = () => once(async () => {
     setBusy(true);
     setError(null);
     try {
@@ -98,7 +99,7 @@ export function CreateTrip() {
       setError(e instanceof ApiError ? e.message : 'Не получилось создать вылазку');
       setBusy(false);
     }
-  }
+  });
 
   const hint = !complete ? 'Впишите время, например 19:30' : past ? 'Это время уже прошло — выберите другое' : undefined;
 

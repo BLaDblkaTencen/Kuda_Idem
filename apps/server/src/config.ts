@@ -20,7 +20,7 @@ const schema = z.object({
     .transform((v) => v === 'true'),
   // Папка собранных экранов (apps/web/dist) для Node.js. Пусто — путь по умолчанию внутри репозитория.
   WEB_DIST_DIR: z.string().default(''),
-  // Загрузить 18 тестовых мест при запуске, если в базе ещё нет ни одного места.
+  // Вымышленные тестовые места: true — загрузить, если их ещё нет, и предлагать; false — скрыть.
   SEED_TEST_PLACES: z
     .string()
     .default('false')
