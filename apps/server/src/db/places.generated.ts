@@ -261,7 +261,7 @@ export const PLACES: NewPlace[] = [
     "address": "ул. Большая Морская, 14",
     "lat": 44.608182,
     "lon": 33.521091,
-    "avgCheck": 1100,
+    "avgCheck": 1000,
     "moods": [
       "eat",
       "chill"
@@ -1237,6 +1237,244 @@ export const PLACES: NewPlace[] = [
     ],
     "season": "all_year",
     "description": "Антикафе: общий зал, игровые приставки, настольные игры.",
+    "website": null,
+    "verifiedAt": "2026-11-17",
+    "isTestData": false,
+    "isActive": true
+  },
+  {
+    "city": "sevastopol",
+    "externalId": "70000001026528900",
+    "name": "Муссон",
+    "type": "entertainment",
+    "kind": "кинотеатр",
+    "district": "gagarinsky",
+    "address": "ул. Вакуленчука, 29 (ТРЦ «Муссон», 2 этаж)",
+    "lat": 44.588289,
+    "lon": 33.487779,
+    "avgCheck": 500,
+    "moods": [
+      "chill"
+    ],
+    "vibes": [
+      "спокойно"
+    ],
+    "features": [
+      "non_alcoholic_menu"
+    ],
+    "maxGroupSize": 15,
+    "noOrderOk": true,
+    "hours": [
+      {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      {
+        "open": "10:00",
+        "close": "22:00"
+      }
+    ],
+    "season": "all_year",
+    "description": "Кинотеатр в торговом центре «Муссон»: новые фильмы, рядом фудкорт.",
+    "website": "musson.su/cinemamusson",
+    "verifiedAt": "2026-11-17",
+    "isTestData": false,
+    "isActive": true
+  },
+  {
+    "city": "sevastopol",
+    "externalId": "70000001055021730",
+    "name": "Фильмотека",
+    "type": "entertainment",
+    "kind": "кинотеатр",
+    "district": "ostryaki",
+    "address": "пр. Генерала Острякова, 260 (3 этаж)",
+    "lat": 44.552315,
+    "lon": 33.528924,
+    "avgCheck": 500,
+    "moods": [
+      "chill"
+    ],
+    "vibes": [
+      "спокойно"
+    ],
+    "features": [
+      "non_alcoholic_menu"
+    ],
+    "maxGroupSize": 15,
+    "noOrderOk": true,
+    "hours": [
+      {
+        "open": "10:00",
+        "close": "21:00"
+      },
+      {
+        "open": "10:00",
+        "close": "21:00"
+      },
+      {
+        "open": "10:00",
+        "close": "21:00"
+      },
+      {
+        "open": "10:00",
+        "close": "21:00"
+      },
+      {
+        "open": "10:00",
+        "close": "21:00"
+      },
+      {
+        "open": "10:00",
+        "close": "21:00"
+      },
+      {
+        "open": "10:00",
+        "close": "21:00"
+      }
+    ],
+    "season": "all_year",
+    "description": "Кинотеатр на проспекте Острякова, билеты от 300 до 600 ₽.",
+    "website": "filmotekasev.ru",
+    "verifiedAt": "2026-11-17",
+    "isTestData": false,
+    "isActive": true
+  },
+  {
+    "city": "sevastopol",
+    "externalId": "70000001025908971",
+    "name": "BnB boys",
+    "type": "bar",
+    "kind": "бар",
+    "district": "gagarinsky",
+    "address": "ул. Адмирала Юмашева, 23",
+    "lat": 44.590298,
+    "lon": 33.463023,
+    "avgCheck": 1400,
+    "moods": [
+      "eat",
+      "party"
+    ],
+    "vibes": [
+      "для компании",
+      "шумно"
+    ],
+    "features": [
+      "non_alcoholic_menu",
+      "big_tables"
+    ],
+    "maxGroupSize": 15,
+    "noOrderOk": false,
+    "hours": [
+      {
+        "open": "11:00",
+        "close": "04:00"
+      },
+      {
+        "open": "11:00",
+        "close": "04:00"
+      },
+      {
+        "open": "11:00",
+        "close": "04:00"
+      },
+      {
+        "open": "11:00",
+        "close": "04:00"
+      },
+      {
+        "open": "11:00",
+        "close": "04:00"
+      },
+      {
+        "open": "11:00",
+        "close": "04:00"
+      },
+      {
+        "open": "11:00",
+        "close": "04:00"
+      }
+    ],
+    "season": "all_year",
+    "description": "Бар с европейской кухней: пицца, бургеры, стейки, вок, спортивные трансляции. До 70 мест.",
+    "website": null,
+    "verifiedAt": "2026-11-17",
+    "isTestData": false,
+    "isActive": true
+  },
+  {
+    "city": "sevastopol",
+    "externalId": "70000001089621891",
+    "name": "Догони",
+    "type": "entertainment",
+    "kind": "картинг",
+    "district": "center",
+    "address": "ул. Пожарова, 21",
+    "lat": 44.601999,
+    "lon": 33.499374,
+    "avgCheck": 1000,
+    "moods": [
+      "play"
+    ],
+    "vibes": [
+      "азартно",
+      "для компании"
+    ],
+    "features": [],
+    "maxGroupSize": 8,
+    "noOrderOk": true,
+    "hours": [
+      {
+        "open": "11:00",
+        "close": "24:00"
+      },
+      {
+        "open": "14:00",
+        "close": "23:00"
+      },
+      {
+        "open": "14:00",
+        "close": "23:00"
+      },
+      {
+        "open": "14:00",
+        "close": "23:00"
+      },
+      {
+        "open": "14:00",
+        "close": "23:00"
+      },
+      {
+        "open": "14:00",
+        "close": "24:00"
+      },
+      {
+        "open": "11:00",
+        "close": "24:00"
+      }
+    ],
+    "season": "all_year",
+    "description": "Картинг: заезд 10 минут — 1000 ₽, есть двойные карты для взрослого с ребёнком.",
     "website": null,
     "verifiedAt": "2026-11-17",
     "isTestData": false,
