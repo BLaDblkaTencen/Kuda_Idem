@@ -39,6 +39,11 @@ export const places = pgTable('places', {
   partnerOffer: text('partner_offer'), // P2: предложение для групп
   verifiedAt: date('verified_at'),
   isTestData: boolean('is_test_data').notNull().default(false),
+  // Id карточки в 2ГИС — по нему места из data/places-sevastopol.csv сопоставляются с базой.
+  externalId: text('external_id').unique(),
+  website: text('website'),
+  // Скрытые места не предлагаются, но остаются в базе: на них ссылаются прошлые вылазки.
+  isActive: boolean('is_active').notNull().default(true),
 });
 
 export const users = pgTable('users', {

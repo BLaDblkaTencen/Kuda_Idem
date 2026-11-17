@@ -21,5 +21,14 @@ export const MIGRATIONS: ReadonlyArray<{ tag: string; statements: readonly strin
       "ALTER TABLE \"votes\" ADD CONSTRAINT \"votes_place_id_places_id_fk\" FOREIGN KEY (\"place_id\") REFERENCES \"public\".\"places\"(\"id\") ON DELETE no action ON UPDATE no action;",
       "CREATE INDEX \"events_name_created_idx\" ON \"events\" USING btree (\"name\",\"created_at\");"
     ]
+  },
+  {
+    "tag": "0001_sticky_patriot",
+    "statements": [
+      "ALTER TABLE \"places\" ADD COLUMN \"external_id\" text;",
+      "ALTER TABLE \"places\" ADD COLUMN \"website\" text;",
+      "ALTER TABLE \"places\" ADD COLUMN \"is_active\" boolean DEFAULT true NOT NULL;",
+      "ALTER TABLE \"places\" ADD CONSTRAINT \"places_external_id_unique\" UNIQUE(\"external_id\");"
+    ]
   }
 ];

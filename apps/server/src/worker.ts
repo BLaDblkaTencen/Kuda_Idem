@@ -8,7 +8,7 @@ import { config, setWebAppUrlIfMissing } from './config.js';
 import { createApp } from './app.js';
 import { ensureWebhook } from './bot.js';
 import { connectWorkerDb, runEmbeddedMigrations } from './db/worker.js';
-import { seedTestPlacesIfEmpty } from './db/setup.js';
+import { seedTestPlacesIfMissing, syncPlaces } from './db/setup.js';
 
 const app = createApp();
 let ready: Promise<void> | null = null;
@@ -19,9 +19,10 @@ async function setup(origin: string): Promise<void> {
   const applied = await runEmbeddedMigrations(sql);
   if (applied) console.log(`Применено миграций: ${applied}`);
   if (config.SEED_TEST_PLACES) {
-    const added = await seedTestPlacesIfEmpty();
-    if (added) console.log(`База была пустой — загружено тестовых мест: ${added}`);
+    const added = await seedTestPlacesIfMissing();
+    if (added) console.log(`Загружено тестовых мест: ${added}`);
   }
+  await syncPlaces({ keepTestPlaces: config.SEED_TEST_PLACES });
   if (config.botEnabled) {
     // Ошибка Telegram не должна ломать API: в худшем случае бот подключится при следующем запуске.
     await ensureWebhook(origin).catch((err) => console.error('Не удалось подключить вебхук бота:', err));

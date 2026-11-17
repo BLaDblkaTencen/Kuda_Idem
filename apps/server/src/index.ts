@@ -9,15 +9,17 @@ import { createApp } from './app.js';
 import { startPolling, stopBot } from './bot.js';
 import { closeDb } from './db/client.js';
 import { connectNodeDb, repoRoot, runNodeMigrations } from './db/node.js';
-import { seedTestPlacesIfEmpty } from './db/setup.js';
+import { seedTestPlacesIfMissing, syncPlaces } from './db/setup.js';
 
 await connectNodeDb();
 // Таблицы создаются и обновляются сами при каждом запуске.
 await runNodeMigrations();
+// Места — из data/places-sevastopol.csv. Тестовые нужны только для разработки (SEED_TEST_PLACES=true).
 if (config.SEED_TEST_PLACES) {
-  const added = await seedTestPlacesIfEmpty();
-  if (added) console.log(`База была пустой — загружено тестовых мест: ${added}`);
+  const added = await seedTestPlacesIfMissing();
+  if (added) console.log(`Загружено тестовых мест: ${added}`);
 }
+console.log(`Мест из таблицы: ${await syncPlaces({ keepTestPlaces: config.SEED_TEST_PLACES })}`);
 
 const app = createApp();
 

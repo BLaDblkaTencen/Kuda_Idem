@@ -174,7 +174,7 @@ tripRoutes.post('/:id/suggest', async (c) => {
     .select({ placeId: tripSuggestions.placeId })
     .from(tripSuggestions)
     .where(eq(tripSuggestions.tripId, id));
-  const allPlaces = await db.select().from(places);
+  const allPlaces = await db.select().from(places).where(eq(places.isActive, true));
   const results = matchPlaces({
     places: allPlaces,
     answers,
