@@ -1,0 +1,19 @@
+{
+  "name": "kuda-idem",
+  "private": true,
+  "description": "Telegram Mini App: компания друзей быстро выбирает, куда пойти в Севастополе",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:generate": "npm run db:generate -w apps/server",
+    "db:migrate": "npm run db:migrate -w apps/server",
+    "db:seed": "npm run db:seed -w apps/server",
+    "dev": "npm run dev -w apps/server",
+    "test": "npm test -w apps/server",
+    "smoke": "npm run smoke -w apps/server",
+    "typecheck": "npm run typecheck -w apps/server"
+  }
+}
