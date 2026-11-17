@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
-import { haptic, showBackButton } from '../telegram';
+import { askWriteAccess, haptic, showBackButton } from '../telegram';
 import type { Answer, Dictionaries } from '../types';
 import { BottomBar, Chip, navigate, Spinner } from '../ui';
 
@@ -45,6 +45,7 @@ export function Survey({ tripId }: { tripId: string }) {
     try {
       await api.answer(tripId, answer);
       haptic.success();
+      await askWriteAccess(); // чтобы бот прислал карточку с итогом
       back();
     } catch (e) {
       haptic.error();

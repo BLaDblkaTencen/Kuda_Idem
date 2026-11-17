@@ -10,7 +10,8 @@ export type EventName =
   | 'more_options_requested'
   | 'vote_cast'
   | 'place_chosen'
-  | 'route_opened';
+  | 'route_opened'
+  | 'result_card_sent';
 
 /** Пишет событие в базу. Ошибка аналитики никогда не ломает основной запрос. */
 export async function track(

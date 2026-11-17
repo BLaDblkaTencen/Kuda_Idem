@@ -160,6 +160,38 @@ export async function stopBot(): Promise<void> {
   if (botInstance?.isRunning()) await botInstance.stop();
 }
 
+// ---------- Личные сообщения от бота ----------
+
+/**
+ * Отправляет сообщение каждому пользователю в личный чат с ботом.
+ * Бот может писать только тем, кто разрешил (запустил бота или дал доступ из Mini App) —
+ * остальным Telegram отвечает ошибкой 403, такие отправки просто пропускаются.
+ */
+export async function sendToUsers(
+  userIds: number[],
+  opts: { html: string; buttons: Array<{ text: string; url: string }> },
+): Promise<{ sent: number; failed: number }> {
+  const bot = await readyBot().catch(() => null);
+  if (!bot) return { sent: 0, failed: userIds.length };
+  const keyboard = new InlineKeyboard();
+  for (const b of opts.buttons) keyboard.url(b.text, b.url).row();
+  const results = await Promise.allSettled(
+    userIds.map((id) =>
+      bot.api.sendMessage(id, opts.html, {
+        parse_mode: 'HTML',
+        link_preview_options: { is_disabled: true },
+        reply_markup: keyboard,
+      }),
+    ),
+  );
+  const failed = results.filter((r) => r.status === 'rejected');
+  for (const r of failed) {
+    const err = (r as PromiseRejectedResult).reason;
+    if (!(err instanceof GrammyError && err.error_code === 403)) console.error('Не удалось отправить сообщение:', err);
+  }
+  return { sent: results.length - failed.length, failed: failed.length };
+}
+
 // ---------- «Поделиться в чат» ----------
 
 /**

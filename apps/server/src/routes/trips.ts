@@ -18,7 +18,8 @@ import { matchPlaces } from '../matching/match.js';
 import { requireUser } from '../http/auth.js';
 import { fail, INVALID_JSON, readJson, type AppEnv } from '../http/types.js';
 import { track } from '../analytics.js';
-import { prepareShareMessage, tripLink } from '../bot.js';
+import { prepareShareMessage, sendToUsers, tripLink } from '../bot.js';
+import { resultCardText, websiteUrl } from '../domain/result-card.js';
 import { placeCard } from './places.js';
 
 const MAX_DAYS_AHEAD = 30;
@@ -261,8 +262,46 @@ tripRoutes.post('/:id/finish', async (c) => {
     .returning();
   const by = max > 0 && leaders.length === 1 ? 'vote' : 'organizer';
   await track('place_chosen', { userId: user.id, tripId: id, props: { placeId: chosenId, round: trip.round, by } });
+  // Карточки рассылаются после ответа: организатору не нужно ждать, пока бот напишет всем.
+  inBackground(c, sendResultCards(updated!));
   return c.json(await tripView(updated!, user.id));
 });
+
+/** На Cloudflare работа после ответа держится через waitUntil, в Node процесс и так продолжает жить. */
+function inBackground(c: Context, task: Promise<unknown>): void {
+  const safe = task.catch((err) => console.error('Фоновая задача упала:', err));
+  try {
+    c.executionCtx.waitUntil(safe);
+  } catch {
+    // Node.js: executionCtx нет — промис доработает сам.
+  }
+}
+
+/** Карточка итога в личный чат с ботом — организатору и всем, кто ответил на анкету или голосовал. */
+async function sendResultCards(trip: Trip): Promise<void> {
+  if (!trip.chosenPlaceId) return;
+  const [place, answered, voted, link] = await Promise.all([
+    db.query.places.findFirst({ where: eq(places.id, trip.chosenPlaceId) }),
+    db
+      .select({ id: users.id, firstName: users.firstName })
+      .from(tripAnswers)
+      .innerJoin(users, eq(users.id, tripAnswers.userId))
+      .where(eq(tripAnswers.tripId, trip.id)),
+    db.select({ id: votes.userId }).from(votes).where(eq(votes.tripId, trip.id)),
+    tripLink(trip.id),
+  ]);
+  if (!place) return;
+  const recipients = [...new Set([trip.organizerId, ...answered.map((a) => a.id), ...voted.map((v) => v.id)])];
+  const buttons = [{ text: 'Маршрут', url: yandexMapsLink(place) }];
+  const site = websiteUrl(place.website);
+  if (site) buttons.push({ text: 'Сайт места', url: site });
+  if (link) buttons.push({ text: 'Открыть вылазку', url: link });
+  const result = await sendToUsers(recipients, {
+    html: resultCardText({ place, startsAt: trip.startsAt, participants: answered.map((a) => a.firstName) }),
+    buttons,
+  });
+  await track('result_card_sent', { userId: trip.organizerId, tripId: trip.id, props: result });
+}
 
 // 2. Сообщение-приглашение для отправки в чат друзей.
 tripRoutes.post('/:id/share/invite', async (c) => {

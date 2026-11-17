@@ -72,7 +72,7 @@ const RELAX_NOTES: Record<RelaxableFilter, string> = {
 
 // ---------- время работы ----------
 
-function toCityTime(date: Date): { weekday: number; minutes: number; month: number } {
+export function toCityTime(date: Date): { weekday: number; minutes: number; month: number } {
   const local = new Date(date.getTime() + CITY_UTC_OFFSET_MIN * 60_000);
   return {
     weekday: local.getUTCDay(),

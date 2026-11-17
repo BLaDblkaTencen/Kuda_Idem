@@ -3,7 +3,7 @@
 
 interface TgWebApp {
   initData: string;
-  initDataUnsafe: { start_param?: string; user?: { id: number; first_name: string } };
+  initDataUnsafe: { start_param?: string; user?: { id: number; first_name: string; allows_write_to_pm?: boolean } };
   colorScheme: 'light' | 'dark';
   ready(): void;
   expand(): void;
@@ -12,6 +12,7 @@ interface TgWebApp {
   openTelegramLink(url: string): void;
   showAlert(message: string): void;
   shareMessage?(preparedMessageId: string, callback?: (sent: boolean) => void): void;
+  requestWriteAccess?(callback?: (allowed: boolean) => void): void;
   BackButton: { show(): void; hide(): void; onClick(cb: () => void): void; offClick(cb: () => void): void };
   HapticFeedback: {
     selectionChanged(): void;
@@ -101,4 +102,21 @@ export function showBackButton(onBack: () => void): () => void {
     tg.BackButton.offClick(onBack);
     tg.BackButton.hide();
   };
+}
+
+let writeAccess: boolean | null = tg?.initDataUnsafe.user?.allows_write_to_pm ? true : null;
+
+/**
+ * Просит разрешить боту писать в личный чат — туда придёт карточка с итогом вылазки.
+ * Спрашивает не больше одного раза за запуск; если разрешение уже есть, окно не показывается.
+ */
+export function askWriteAccess(): Promise<boolean> {
+  if (writeAccess !== null) return Promise.resolve(writeAccess);
+  if (!inTelegram || !tg?.requestWriteAccess || !tg.isVersionAtLeast('6.9')) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    tg.requestWriteAccess!((allowed) => {
+      writeAccess = allowed;
+      resolve(allowed);
+    });
+  });
 }

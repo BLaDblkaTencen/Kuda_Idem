@@ -334,6 +334,7 @@ function Decided({ trip }: { trip: TripData }) {
         <p>{place.address}</p>
         {place.description && <p className="muted">{place.description}</p>}
       </div>
+      <p className="muted center">Карточка с деталями встречи пришла каждому в чат с ботом</p>
 
       <button className="btn secondary" onClick={() => void share('result')}>
         Отправить итог в чат
