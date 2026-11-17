@@ -184,7 +184,7 @@ export const PLACES: NewPlace[] = [
     ],
     "season": "all_year",
     "description": "Пиццерия сети: пицца, паста, салаты, бизнес-ланч. Летняя веранда, до 80 мест.",
-    "website": "chelentano.rest",
+    "website": null,
     "verifiedAt": "2026-11-17",
     "isTestData": false,
     "isActive": true
@@ -680,7 +680,7 @@ export const PLACES: NewPlace[] = [
     ],
     "season": "all_year",
     "description": "Кафе-бар с азиатской и европейской кухней, завтраки, летняя веранда, до 70 мест.",
-    "website": "пакетеды.рф",
+    "website": "perebarshi.ru",
     "verifiedAt": "2026-11-17",
     "isTestData": false,
     "isActive": true
@@ -1176,7 +1176,7 @@ export const PLACES: NewPlace[] = [
     ],
     "season": "all_year",
     "description": "Кинотеатр в центре города.",
-    "website": "sevkino.ru",
+    "website": null,
     "verifiedAt": "2026-11-17",
     "isTestData": false,
     "isActive": true
@@ -1296,7 +1296,7 @@ export const PLACES: NewPlace[] = [
     ],
     "season": "all_year",
     "description": "Кинотеатр в торговом центре «Муссон»: новые фильмы, рядом фудкорт.",
-    "website": "musson.su/cinemamusson",
+    "website": null,
     "verifiedAt": "2026-11-17",
     "isTestData": false,
     "isActive": true
