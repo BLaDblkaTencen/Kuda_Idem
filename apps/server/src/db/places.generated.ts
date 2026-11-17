@@ -1311,7 +1311,7 @@ export const PLACES: NewPlace[] = [
     "address": "пр. Генерала Острякова, 260 (3 этаж)",
     "lat": 44.552315,
     "lon": 33.528924,
-    "avgCheck": 500,
+    "avgCheck": 400,
     "moods": [
       "chill"
     ],
@@ -1370,7 +1370,7 @@ export const PLACES: NewPlace[] = [
     "address": "ул. Адмирала Юмашева, 23",
     "lat": 44.590298,
     "lon": 33.463023,
-    "avgCheck": 1400,
+    "avgCheck": 1500,
     "moods": [
       "eat",
       "party"
