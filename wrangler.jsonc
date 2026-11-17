@@ -20,7 +20,7 @@
   "vars": {
     "NODE_ENV": "production",
     "BOT_MODE": "webhook",
-    "SEED_TEST_PLACES": "true"
+    "SEED_TEST_PLACES": "false"
   },
 
   // Логи в панели Cloudflare (Workers → kuda-idem → Logs).

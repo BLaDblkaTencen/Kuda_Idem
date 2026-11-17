@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { places, type Place } from '../db/schema.js';
 import { DISTRICTS, FEATURES, PLACE_TYPES, type District, type Feature, type PlaceType } from '../domain/constants.js';
@@ -29,6 +29,10 @@ export function placeCard(p: Place) {
 
 // Каталог мест (P1: просмотр без вылазки). Сейчас — для проверки данных.
 export const placeRoutes = new Hono().get('/', async (c) => {
-  const rows = await db.select().from(places).where(eq(places.city, 'sevastopol')).orderBy(asc(places.name));
+  const rows = await db
+    .select()
+    .from(places)
+    .where(and(eq(places.city, 'sevastopol'), eq(places.isActive, true)))
+    .orderBy(asc(places.name));
   return c.json(rows.map(placeCard));
 });

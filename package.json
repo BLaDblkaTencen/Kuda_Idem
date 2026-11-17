@@ -19,6 +19,7 @@
     "cf:deploy": "npm test && npm run build:web && wrangler deploy",
     "test": "npm test -w apps/server",
     "smoke": "npm run smoke -w apps/server",
-    "typecheck": "npm run typecheck -w apps/server"
+    "typecheck": "npm run typecheck -w apps/server",
+    "places:build": "npm run places:build -w apps/server"
   }
 }

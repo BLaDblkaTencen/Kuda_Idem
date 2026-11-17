@@ -11,7 +11,8 @@
     "db:generate": "drizzle-kit generate && node scripts/embed-migrations.mjs",
     "db:migrate": "tsx --env-file=../../.env src/db/migrate.ts",
     "db:seed": "tsx --env-file=../../.env src/db/seed.ts",
-    "smoke": "tsx scripts/smoke.ts"
+    "smoke": "tsx scripts/smoke.ts",
+    "places:build": "tsx scripts/places-from-csv.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",

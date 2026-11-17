@@ -18,6 +18,7 @@ export const DISTRICTS = {
   center: 'Центр',
   gagarinsky: 'Гагаринский (Омега, Камышовая)',
   korabelnaya: 'Корабельная сторона',
+  ostryaki: 'Остряки',
   severnaya: 'Северная сторона',
   balaklava: 'Балаклава',
 } as const;
@@ -25,9 +26,10 @@ export type District = keyof typeof DISTRICTS;
 export const DISTRICT_KEYS = Object.keys(DISTRICTS) as District[];
 
 export const DISTRICT_NEIGHBORS: Record<District, District[]> = {
-  center: ['gagarinsky', 'korabelnaya', 'severnaya'],
+  center: ['gagarinsky', 'korabelnaya', 'ostryaki', 'severnaya'],
   gagarinsky: ['center'],
-  korabelnaya: ['center'],
+  korabelnaya: ['center', 'ostryaki'],
+  ostryaki: ['center', 'korabelnaya'],
   severnaya: ['center'],
   balaklava: [],
 };
