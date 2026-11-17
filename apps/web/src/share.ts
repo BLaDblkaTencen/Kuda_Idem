@@ -22,7 +22,7 @@ export function useShare() {
       const tripUrl = trip.link ?? `${window.location.origin}${window.location.pathname}#/trip/${trip.id}`;
       const how =
         kind === 'invite'
-          ? await shareTextFallback(`Собираемся: ${trip.startsAtLabel}. Участвовать:`, tripUrl)
+          ? await shareTextFallback(`Собираю вылазку: ${trip.startsAtLabel}. Ответь за 30 секунд — подберём место, которое подойдёт всем:`, tripUrl)
           : await shareTextFallback(
               `Идём: ${trip.chosenPlace?.title}, ${trip.startsAtLabel}, ${trip.chosenPlace?.address}. Маршрут:`,
               trip.chosenPlace?.mapsUrl ?? tripUrl,
