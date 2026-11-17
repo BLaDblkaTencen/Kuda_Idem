@@ -30,5 +30,11 @@ export const MIGRATIONS: ReadonlyArray<{ tag: string; statements: readonly strin
       "ALTER TABLE \"places\" ADD COLUMN \"is_active\" boolean DEFAULT true NOT NULL;",
       "ALTER TABLE \"places\" ADD CONSTRAINT \"places_external_id_unique\" UNIQUE(\"external_id\");"
     ]
+  },
+  {
+    "tag": "0002_nebulous_doctor_doom",
+    "statements": [
+      "ALTER TABLE \"places\" ADD COLUMN \"kind\" text;"
+    ]
   }
 ];

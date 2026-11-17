@@ -22,6 +22,8 @@ export const places = pgTable('places', {
   city: text('city').notNull().default('sevastopol'),
   name: text('name').notNull(),
   type: text('type').notNull(),
+  // Вид заведения для людей: «кинотеатр», «бильярдный клуб». type — общая категория для подбора.
+  kind: text('kind'),
   district: text('district').notNull(),
   address: text('address').notNull(),
   lat: doublePrecision('lat'),

@@ -4,12 +4,15 @@ import { db } from '../db/client.js';
 import { places, type Place } from '../db/schema.js';
 import { DISTRICTS, FEATURES, PLACE_TYPES, type District, type Feature, type PlaceType } from '../domain/constants.js';
 import { yandexMapsLink } from '../domain/format.js';
+import { placeKind, placeTitle } from '../domain/place-name.js';
 
 /** Карточка места для интерфейса: всё уже с русскими подписями. */
 export function placeCard(p: Place) {
   return {
     id: p.id,
     name: p.name,
+    title: placeTitle(p), // «Кинотеатр «Победа»»
+    kind: placeKind(p),
     type: p.type,
     typeLabel: PLACE_TYPES[p.type as PlaceType] ?? p.type,
     district: p.district,

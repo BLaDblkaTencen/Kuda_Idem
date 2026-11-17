@@ -3,6 +3,9 @@
 export interface PlaceCard {
   id: number;
   name: string;
+  /** «Кинотеатр «Победа»» — вид заведения и название */
+  title: string;
+  kind: string;
   type: string;
   typeLabel: string;
   district: string;

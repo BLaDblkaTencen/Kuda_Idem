@@ -56,7 +56,7 @@ function useShare(trip: TripData | null) {
         kind === 'invite'
           ? await shareTextFallback(`Собираю вылазку: ${trip.startsAtLabel}. Ответь за 30 секунд — подберём место, которое подойдёт всем:`, tripUrl)
           : await shareTextFallback(
-              `Идём: ${trip.chosenPlace?.name}, ${trip.startsAtLabel}, ${trip.chosenPlace?.address}. Маршрут:`,
+              `Идём: ${trip.chosenPlace?.title}, ${trip.startsAtLabel}, ${trip.chosenPlace?.address}. Маршрут:`,
               trip.chosenPlace?.mapsUrl ?? tripUrl,
             );
       if (how === 'copied') toast('Текст скопирован — вставьте его в чат с друзьями');
@@ -244,9 +244,9 @@ function Voting({ trip, setTrip }: StepProps) {
           <article key={place.id} className={`card${mine ? ' accent' : ''}`}>
             <div className="row between" style={{ alignItems: 'flex-start' }}>
               <div className="stack" style={{ gap: 2 }}>
-                <h3 className="place-name">{place.name}</h3>
+                <h3 className="place-name">{place.title}</h3>
                 <span className="place-meta">
-                  {place.typeLabel} · {place.districtLabel}
+                  {place.districtLabel}
                   {place.isTestData && ' · тестовое место'}
                 </span>
               </div>
@@ -327,9 +327,9 @@ function Decided({ trip }: { trip: TripData }) {
           🎉
         </div>
         <p className="muted">Идём в</p>
-        <h2 className="result-title">{place.name}</h2>
+        <h2 className="result-title">{place.title}</h2>
         <p className="place-meta">
-          {place.typeLabel} · {place.districtLabel} · {priceLabel(place.avgCheck)}
+          {place.districtLabel} · {priceLabel(place.avgCheck)}
         </p>
         <p>{place.address}</p>
         {place.description && <p className="muted">{place.description}</p>}

@@ -15,6 +15,13 @@
       "when": 1794946013378,
       "tag": "0001_sticky_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794948459678,
+      "tag": "0002_nebulous_doctor_doom",
+      "breakpoints": true
     }
   ]
 }

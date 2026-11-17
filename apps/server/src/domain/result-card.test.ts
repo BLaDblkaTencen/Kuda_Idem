@@ -7,6 +7,7 @@ const week = (open: string, close: string) => Array.from({ length: 7 }, () => ({
 const place = {
   name: 'Бар <Маяк>',
   type: 'bar',
+  kind: 'пивоварня',
   district: 'center',
   address: 'ул. Ленина, 1',
   avgCheck: 900,
@@ -20,7 +21,7 @@ const friday19 = new Date('2026-11-20T16:00:00Z');
 describe('resultCardText', () => {
   it('собирает место, время, чек, часы и участников', () => {
     const text = resultCardText({ place, startsAt: friday19, participants: ['Маша', 'Петя'] });
-    expect(text).toContain('<b>Идём в «Бар &lt;Маяк&gt;»</b>');
+    expect(text).toContain('<b>Идём в пивоварню «Бар &lt;Маяк&gt;»</b>');
     expect(text).toContain('пятница, 20 ноября в 19:00');
     expect(text).toContain('ул. Ленина, 1 · Центр');
     expect(text).toContain('≈ 900 ₽ на человека');

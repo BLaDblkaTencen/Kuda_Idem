@@ -6,7 +6,7 @@ import { parseWeeklyHours } from './hours.js';
 // Каждая ошибка сообщается с номером строки, чтобы её было легко найти в Excel.
 
 const COLUMNS = [
-  'название', 'тип', 'район', 'адрес', 'широта', 'долгота', 'чек_руб', 'настроения', 'атмосфера',
+  'название', 'тип', 'вид', 'район', 'адрес', 'широта', 'долгота', 'чек_руб', 'настроения', 'атмосфера',
   'особенности', 'макс_компания', 'можно_без_заказа', 'часы', 'сезон', 'описание', 'источник_2гис', 'сайт',
 ] as const;
 
@@ -81,6 +81,9 @@ export function parsePlacesCsv(text: string, verifiedAt: string): NewPlace[] {
       throw new Error(`Строка ${line} («${name}»): ${(e as Error).message}`);
     }
 
+    const kind = get('вид').toLowerCase();
+    if (!kind) throw new Error(`Строка ${line} («${name}»): пустой «вид» — например «кинотеатр» или «пиццерия»`);
+
     const noOrder = get('можно_без_заказа').toLowerCase();
     if (!['да', 'нет'].includes(noOrder)) throw new Error(`Строка ${line}: «можно_без_заказа» — «да» или «нет»`);
 
@@ -89,6 +92,7 @@ export function parsePlacesCsv(text: string, verifiedAt: string): NewPlace[] {
       externalId,
       name,
       type: checkKeys([get('тип')], PLACE_TYPES, 'тип', line)[0]!,
+      kind,
       district: checkKeys([get('район')], DISTRICTS, 'район', line)[0]!,
       address: get('адрес'),
       lat: num('широта'),

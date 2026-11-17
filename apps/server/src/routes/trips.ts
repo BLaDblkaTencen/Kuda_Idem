@@ -21,6 +21,7 @@ import { track } from '../analytics.js';
 import { prepareShareMessage, sendToUsers, tripLink, type BotMessage } from '../bot.js';
 import { config } from '../config.js';
 import { resultCardText, websiteUrl } from '../domain/result-card.js';
+import { placeTitleTo } from '../domain/place-name.js';
 import { placeCard } from './places.js';
 
 const MAX_DAYS_AHEAD = 30;
@@ -333,8 +334,7 @@ tripRoutes.post('/:id/share/result', async (c) => {
   const place = (await db.query.places.findFirst({ where: eq(places.id, trip.chosenPlaceId) })) as Place;
   const link = await tripLink(id);
   if (!link) return fail(c, 503, 'bot_disabled', 'Бот не подключён');
-  // Название может уже содержать кавычки («Кафе «Маяк»») — тогда не добавляем свои.
-  const quoted = place.name.includes('«') ? place.name : `«${place.name}»`;
+  const quoted = placeTitleTo(place); // «пиццерию «Челентано»»
   const messageId = await prepareShareMessage(user.id, {
     title: `Идём в ${quoted}`,
     text: `Идём в ${quoted}!\n${formatTripDate(trip.startsAt)}\n${place.address}`,

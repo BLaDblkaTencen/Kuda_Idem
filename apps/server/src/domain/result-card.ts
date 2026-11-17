@@ -1,7 +1,8 @@
 import type { Place } from '../db/schema.js';
 import { toCityTime } from '../matching/match.js';
-import { DISTRICTS, PLACE_TYPES, type District, type PlaceType } from './constants.js';
+import { DISTRICTS, type District } from './constants.js';
 import { formatTripDate } from './format.js';
+import { placeTitleTo } from './place-name.js';
 
 // Карточка итога вылазки, которую бот присылает каждому участнику в личный чат.
 // Текст в разметке HTML (parse_mode: 'HTML'), поэтому всё из базы экранируется.
@@ -34,15 +35,12 @@ export function websiteUrl(site: string | null): string | null {
 
 export function resultCardText(opts: { place: Place; startsAt: Date; participants: string[] }): string {
   const { place, startsAt, participants } = opts;
-  const name = place.name.includes('«') ? place.name : `«${place.name}»`;
-  const type = PLACE_TYPES[place.type as PlaceType] ?? place.type;
   const district = DISTRICTS[place.district as District] ?? place.district;
   const price = place.avgCheck === 0 ? 'бесплатно' : `≈ ${place.avgCheck} ₽ на человека`;
   const hours = hoursOnTripDay(place.hours, startsAt);
 
   const lines = [
-    `🎉 <b>Идём в ${escape(name)}</b>`,
-    `<i>${escape(type)}</i>`,
+    `🎉 <b>Идём в ${escape(placeTitleTo(place))}</b>`,
     '',
     `🗓 ${escape(formatTripDate(startsAt))}`,
     `📍 ${escape(place.address)} · ${escape(district)}`,
