@@ -135,6 +135,59 @@ h1, h2, h3, p { margin: 0; }
 .chip:disabled { opacity: 0.35; cursor: default; }
 .chip.static { cursor: default; background: var(--accent-soft); color: var(--text); padding: 5px 11px; font-size: 13px; }
 
+/* ---------- создание вылазки ---------- */
+.invite-plate {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-radius: 16px;
+  padding: 18px 20px 20px;
+}
+.invite-plate small { display: block; font-size: 13px; opacity: 0.8; }
+.invite-plate b { display: block; font-size: 22px; line-height: 1.25; margin-top: 4px; }
+
+.day-strip { display: flex; gap: 6px; }
+.day-cell {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: 12px;
+  padding: 8px 0;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+.day-cell small { font-size: 12px; color: var(--hint); }
+.day-cell b { font-size: 18px; }
+.day-cell[aria-pressed='true'] { background: var(--accent); color: var(--accent-text); }
+.day-cell[aria-pressed='true'] small { color: inherit; opacity: 0.8; }
+
+.time-card { align-items: center; }
+.time-inputs { display: flex; align-items: center; gap: 6px; }
+.time-field {
+  width: 76px;
+  height: 60px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  text-align: center;
+  font: inherit;
+  font-size: 32px;
+  font-weight: 700;
+  outline: none;
+  caret-color: var(--accent);
+}
+.time-field::placeholder { color: var(--hint); opacity: 0.5; font-weight: 400; font-size: 22px; }
+.time-field:focus { background: var(--card); box-shadow: inset 0 0 0 2px var(--accent); }
+.time-colon { font-size: 30px; font-weight: 700; color: var(--hint); }
+.quick-times { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
+.quick-times .chip { background: var(--card); font-size: 14px; padding: 6px 12px; }
+.quick-times .chip[aria-pressed='true'] { background: var(--accent); color: var(--accent-text); }
+
 /* ---------- люди ---------- */
 .avatar {
   width: 36px;

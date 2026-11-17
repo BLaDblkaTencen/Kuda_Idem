@@ -319,7 +319,8 @@ tripRoutes.post('/:id/share/invite', async (c) => {
   if (!link) return fail(c, 503, 'bot_disabled', 'Бот не подключён');
   const messageId = await prepareShareMessage(user.id, {
     title: 'Приглашение на вылазку',
-    text: `${user.firstName} собирает вылазку: ${formatTripDate(trip.startsAt)}.\nОтветь за 30 секунд — подберём место, которое подойдёт всем.`,
+    // Тот же текст, что в синей плашке на экране создания: «Так приглашение увидят друзья».
+    text: `Собираемся: ${formatTripDate(trip.startsAt)}`,
     buttons: [{ text: 'Участвовать', url: link }],
   });
   return c.json({ preparedMessageId: messageId });

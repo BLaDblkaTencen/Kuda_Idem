@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
-import { canShareMessage, haptic, openExternal, shareMessage, shareTextFallback } from '../telegram';
+import { haptic, openExternal } from '../telegram';
+import { useShare } from '../share';
 import type { Trip as TripData } from '../types';
 import { Avatar, BottomBar, navigate, plural, priceLabel, Spinner, useToast } from '../ui';
 
@@ -35,35 +36,6 @@ function useTrip(id: string) {
   }, [reload, trip?.status]);
 
   return { trip, setTrip, error, reload };
-}
-
-/** Отправка в чат: в Telegram — нативным окном выбора чата, в браузере — копирование ссылки. */
-function useShare(trip: TripData | null) {
-  const toast = useToast();
-  return async (kind: 'invite' | 'result') => {
-    if (!trip) return;
-    try {
-      if (canShareMessage()) {
-        const { preparedMessageId } = kind === 'invite' ? await api.shareInvite(trip.id) : await api.shareResult(trip.id);
-        if (preparedMessageId && (await shareMessage(preparedMessageId))) {
-          haptic.success();
-          return;
-        }
-        if (preparedMessageId) return; // пользователь закрыл окно выбора чата
-      }
-      const tripUrl = trip.link ?? `${window.location.origin}${window.location.pathname}#/trip/${trip.id}`;
-      const how =
-        kind === 'invite'
-          ? await shareTextFallback(`Собираю вылазку: ${trip.startsAtLabel}. Ответь за 30 секунд — подберём место, которое подойдёт всем:`, tripUrl)
-          : await shareTextFallback(
-              `Идём: ${trip.chosenPlace?.title}, ${trip.startsAtLabel}, ${trip.chosenPlace?.address}. Маршрут:`,
-              trip.chosenPlace?.mapsUrl ?? tripUrl,
-            );
-      if (how === 'copied') toast('Текст скопирован — вставьте его в чат с друзьями');
-    } catch (e) {
-      toast(e instanceof ApiError ? e.message : 'Не получилось поделиться');
-    }
-  };
 }
 
 export function Trip({ tripId }: { tripId: string }) {
@@ -104,7 +76,7 @@ type StepProps = { trip: TripData; setTrip: (t: TripData) => void };
 // ---------- 1. Сбор ответов ----------
 
 function Collecting({ trip, setTrip }: StepProps) {
-  const share = useShare(trip);
+  const share = useShare();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   const n = trip.participants.length;
@@ -128,7 +100,7 @@ function Collecting({ trip, setTrip }: StepProps) {
         <div className="card accent">
           <h2 className="place-name">Позовите друзей</h2>
           <p className="muted">Отправьте приглашение в общий чат — каждый ответит на 4 вопроса.</p>
-          <button className="btn secondary" onClick={() => void share('invite')}>
+          <button className="btn secondary" onClick={() => void share(trip, 'invite')}>
             Отправить в чат
           </button>
         </div>
@@ -167,7 +139,7 @@ function Collecting({ trip, setTrip }: StepProps) {
             </div>
           ) : (
             <>
-              <p>Ответьте на 4 вопроса — это 30 секунд.</p>
+              <p>Ответьте на 4 коротких вопроса.</p>
               <button className="btn secondary" onClick={() => navigate({ name: 'survey', id: trip.id })}>
                 Заполнить анкету
               </button>
@@ -316,7 +288,7 @@ function Voting({ trip, setTrip }: StepProps) {
 // ---------- 3. Итог ----------
 
 function Decided({ trip }: { trip: TripData }) {
-  const share = useShare(trip);
+  const share = useShare();
   const place = trip.chosenPlace;
   if (!place) return null;
 
@@ -336,7 +308,7 @@ function Decided({ trip }: { trip: TripData }) {
       </div>
       <p className="muted center">Карточка с деталями встречи пришла каждому в чат с ботом</p>
 
-      <button className="btn secondary" onClick={() => void share('result')}>
+      <button className="btn secondary" onClick={() => void share(trip, 'result')}>
         Отправить итог в чат
       </button>
 
