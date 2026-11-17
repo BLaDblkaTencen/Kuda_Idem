@@ -18,7 +18,8 @@ import { matchPlaces } from '../matching/match.js';
 import { requireUser } from '../http/auth.js';
 import { fail, INVALID_JSON, readJson, type AppEnv } from '../http/types.js';
 import { track } from '../analytics.js';
-import { prepareShareMessage, sendToUsers, tripLink } from '../bot.js';
+import { prepareShareMessage, sendToUsers, tripLink, type BotMessage } from '../bot.js';
+import { config } from '../config.js';
 import { resultCardText, websiteUrl } from '../domain/result-card.js';
 import { placeCard } from './places.js';
 
@@ -280,7 +281,7 @@ function inBackground(c: Context, task: Promise<unknown>): void {
 /** Карточка итога в личный чат с ботом — организатору и всем, кто ответил на анкету или голосовал. */
 async function sendResultCards(trip: Trip): Promise<void> {
   if (!trip.chosenPlaceId) return;
-  const [place, answered, voted, link] = await Promise.all([
+  const [place, answered, voted] = await Promise.all([
     db.query.places.findFirst({ where: eq(places.id, trip.chosenPlaceId) }),
     db
       .select({ id: users.id, firstName: users.firstName })
@@ -288,18 +289,22 @@ async function sendResultCards(trip: Trip): Promise<void> {
       .innerJoin(users, eq(users.id, tripAnswers.userId))
       .where(eq(tripAnswers.tripId, trip.id)),
     db.select({ id: votes.userId }).from(votes).where(eq(votes.tripId, trip.id)),
-    tripLink(trip.id),
   ]);
   if (!place) return;
   const recipients = [...new Set([trip.organizerId, ...answered.map((a) => a.id), ...voted.map((v) => v.id)])];
-  const buttons = [{ text: 'Маршрут', url: yandexMapsLink(place) }];
+  const buttons: BotMessage['buttons'] = [{ text: 'Маршрут', url: yandexMapsLink(place) }];
   const site = websiteUrl(place.website);
   if (site) buttons.push({ text: 'Сайт места', url: site });
-  if (link) buttons.push({ text: 'Открыть вылазку', url: link });
-  const result = await sendToUsers(recipients, {
-    html: resultCardText({ place, startsAt: trip.startsAt, participants: answered.map((a) => a.firstName) }),
-    buttons,
-  });
+  const messages: BotMessage[] = [
+    { html: resultCardText({ place, startsAt: trip.startsAt, participants: answered.map((a) => a.firstName) }), buttons },
+  ];
+  if (config.WEB_APP_URL.startsWith('https://')) {
+    messages.push({
+      html: 'Хорошо вам провести время! 🙌\nКогда захочется снова куда-нибудь выбраться — соберите новую вылазку.',
+      buttons: [{ text: 'Собрать новую вылазку', webApp: config.WEB_APP_URL }],
+    });
+  }
+  const result = await sendToUsers(recipients, messages);
   await track('result_card_sent', { userId: trip.organizerId, tripId: trip.id, props: result });
 }
 

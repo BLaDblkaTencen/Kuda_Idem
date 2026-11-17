@@ -167,22 +167,31 @@ export async function stopBot(): Promise<void> {
  * Бот может писать только тем, кто разрешил (запустил бота или дал доступ из Mini App) —
  * остальным Telegram отвечает ошибкой 403, такие отправки просто пропускаются.
  */
-export async function sendToUsers(
-  userIds: number[],
-  opts: { html: string; buttons: Array<{ text: string; url: string }> },
-): Promise<{ sent: number; failed: number }> {
+export type BotMessage = {
+  html: string;
+  // url — обычная ссылка; webApp — открыть Mini App (работает только в личном чате с ботом).
+  buttons: Array<{ text: string; url: string } | { text: string; webApp: string }>;
+};
+
+/** Каждому пользователю — сообщения по порядку. Если первое не дошло, остальные ему не шлются. */
+export async function sendToUsers(userIds: number[], messages: BotMessage[]): Promise<{ sent: number; failed: number }> {
   const bot = await readyBot().catch(() => null);
   if (!bot) return { sent: 0, failed: userIds.length };
-  const keyboard = new InlineKeyboard();
-  for (const b of opts.buttons) keyboard.url(b.text, b.url).row();
+  const prepared = messages.map((m) => {
+    const keyboard = new InlineKeyboard();
+    for (const b of m.buttons) ('url' in b ? keyboard.url(b.text, b.url) : keyboard.webApp(b.text, b.webApp)).row();
+    return { html: m.html, keyboard };
+  });
   const results = await Promise.allSettled(
-    userIds.map((id) =>
-      bot.api.sendMessage(id, opts.html, {
-        parse_mode: 'HTML',
-        link_preview_options: { is_disabled: true },
-        reply_markup: keyboard,
-      }),
-    ),
+    userIds.map(async (id) => {
+      for (const m of prepared) {
+        await bot.api.sendMessage(id, m.html, {
+          parse_mode: 'HTML',
+          link_preview_options: { is_disabled: true },
+          reply_markup: m.keyboard,
+        });
+      }
+    }),
   );
   const failed = results.filter((r) => r.status === 'rejected');
   for (const r of failed) {
