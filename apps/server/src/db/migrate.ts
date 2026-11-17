@@ -1,6 +1,7 @@
 import { closeDb } from './client.js';
-import { runMigrations } from './setup.js';
+import { connectNodeDb, runNodeMigrations } from './node.js';
 
-await runMigrations();
+await connectNodeDb();
+await runNodeMigrations();
 console.log('Миграции применены');
 await closeDb();

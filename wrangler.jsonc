@@ -1,0 +1,28 @@
+// Настройки Cloudflare Workers. Публикация: npm run cf:deploy (см. DEPLOY.md).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kuda-idem",
+  "main": "apps/server/src/worker.ts",
+  "compatibility_date": "2026-09-01",
+  // Совместимость с Node.js: process.env, node:crypto, Buffer.
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Экраны Mini App — статические файлы: Cloudflare отдаёт их сам, бесплатно и без лимита запросов.
+  // В Worker (и в лимит 100 000 запросов в день) попадают только /api/*.
+  "assets": {
+    "directory": "apps/web/dist",
+    "run_worker_first": ["/api/*"]
+  },
+
+  // Обычные настройки (не секреты). Секреты задаются командой `npx wrangler secret put ИМЯ`:
+  //   DATABASE_URL — строка подключения к Neon;
+  //   BOT_TOKEN    — токен бота из @BotFather.
+  "vars": {
+    "NODE_ENV": "production",
+    "BOT_MODE": "webhook",
+    "SEED_TEST_PLACES": "true"
+  },
+
+  // Логи в панели Cloudflare (Workers → kuda-idem → Logs).
+  "observability": { "enabled": true }
+}

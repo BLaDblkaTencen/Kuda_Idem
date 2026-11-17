@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import { Hono } from 'hono';
 import { asc, eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { places, type Place } from '../db/schema.js';
@@ -27,10 +27,8 @@ export function placeCard(p: Place) {
   };
 }
 
-export async function placeRoutes(app: FastifyInstance): Promise<void> {
-  // Каталог мест (P1: просмотр без вылазки). Сейчас — для проверки данных.
-  app.get('/api/places', async () => {
-    const rows = await db.select().from(places).where(eq(places.city, 'sevastopol')).orderBy(asc(places.name));
-    return rows.map(placeCard);
-  });
-}
+// Каталог мест (P1: просмотр без вылазки). Сейчас — для проверки данных.
+export const placeRoutes = new Hono().get('/', async (c) => {
+  const rows = await db.select().from(places).where(eq(places.city, 'sevastopol')).orderBy(asc(places.name));
+  return c.json(rows.map(placeCard));
+});

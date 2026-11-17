@@ -4,7 +4,9 @@ import { canShareMessage, haptic, openExternal, shareMessage, shareTextFallback 
 import type { Trip as TripData } from '../types';
 import { Avatar, BottomBar, navigate, plural, priceLabel, Spinner, useToast } from '../ui';
 
-const POLL_MS = 4000;
+// Как часто экран спрашивает сервер о чужих изменениях (ответы, голоса).
+// Свои действия обновляют экран сразу, без ожидания.
+const POLL_MS = 10_000;
 
 /** Загружает вылазку и обновляет её, пока друзья отвечают и голосуют. */
 function useTrip(id: string) {

@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyReply } from 'fastify';
+import { Hono, type Context } from 'hono';
 import { and, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
@@ -16,6 +16,7 @@ import {
 import { formatTripDate, yandexMapsLink } from '../domain/format.js';
 import { matchPlaces } from '../matching/match.js';
 import { requireUser } from '../http/auth.js';
+import { fail, INVALID_JSON, readJson, type AppEnv } from '../http/types.js';
 import { track } from '../analytics.js';
 import { prepareShareMessage, tripLink } from '../bot.js';
 import { placeCard } from './places.js';
@@ -37,13 +38,19 @@ const answerBody = z.object({
 
 const voteBody = z.object({ placeId: z.number().int().positive() });
 const finishBody = z.object({ placeId: z.number().int().positive().optional() });
-const tripParams = z.object({ id: z.string().min(1).max(32) });
+const eventBody = z.object({ name: z.enum(['route_opened']) });
+const tripId = z.string().min(1).max(32).regex(/^[\w-]+$/);
 
-function fail(reply: FastifyReply, status: number, error: string, message: string) {
-  return reply.code(status).send({ error, message });
+/** Тело запроса по схеме; null — если тело испорчено или не подходит. */
+async function parseBody<T>(c: Context, schema: z.ZodType<T>): Promise<T | null> {
+  const raw = await readJson(c);
+  if (raw === INVALID_JSON) return null;
+  const parsed = schema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
 }
 
 async function loadTrip(id: string): Promise<Trip | undefined> {
+  if (!tripId.safeParse(id).success) return undefined;
   return db.query.trips.findFirst({ where: eq(trips.id, id) });
 }
 
@@ -65,7 +72,7 @@ async function voteTally(tripId: string): Promise<Map<number, number>> {
 
 /** Всё, что нужно экрану вылазки, одним ответом. */
 async function tripView(trip: Trip, userId: number) {
-  const [organizer, answers, suggestions, tally, allVotes, chosen] = await Promise.all([
+  const [organizer, answers, suggestions, tally, allVotes, chosen, link] = await Promise.all([
     db.query.users.findFirst({ where: eq(users.id, trip.organizerId) }),
     db
       .select({ answer: tripAnswers, user: users })
@@ -76,6 +83,7 @@ async function tripView(trip: Trip, userId: number) {
     voteTally(trip.id),
     db.select().from(votes).where(eq(votes.tripId, trip.id)),
     trip.chosenPlaceId ? db.query.places.findFirst({ where: eq(places.id, trip.chosenPlaceId) }) : undefined,
+    tripLink(trip.id),
   ]);
 
   const mine = answers.find((a) => a.user.id === userId)?.answer;
@@ -98,205 +106,207 @@ async function tripView(trip: Trip, userId: number) {
     })),
     myVote: allVotes.find((v) => v.userId === userId)?.placeId ?? null,
     chosenPlace: chosen ? placeCard(chosen) : null,
-    link: tripLink(trip.id),
+    link,
   };
 }
 
-export async function tripRoutes(app: FastifyInstance): Promise<void> {
-  app.addHook('preHandler', requireUser);
+export const tripRoutes = new Hono<AppEnv>();
+tripRoutes.use('*', requireUser);
 
-  // 1. Организатор создаёт вылазку.
-  app.post('/api/trips', async (req, reply) => {
-    const body = createTripBody.safeParse(req.body);
-    if (!body.success) return fail(reply, 400, 'bad_request', 'Укажите дату и время встречи');
-    const startsAt = new Date(body.data.startsAt);
-    const now = Date.now();
-    if (startsAt.getTime() < now - 60 * 60_000 || startsAt.getTime() > now + MAX_DAYS_AHEAD * 86_400_000) {
-      return fail(reply, 400, 'bad_date', `Дата должна быть в ближайшие ${MAX_DAYS_AHEAD} дней`);
+// 1. Организатор создаёт вылазку.
+tripRoutes.post('/', async (c) => {
+  const user = c.get('user');
+  const body = await parseBody(c, createTripBody);
+  if (!body) return fail(c, 400, 'bad_request', 'Укажите дату и время встречи');
+  const startsAt = new Date(body.startsAt);
+  const now = Date.now();
+  if (startsAt.getTime() < now - 60 * 60_000 || startsAt.getTime() > now + MAX_DAYS_AHEAD * 86_400_000) {
+    return fail(c, 400, 'bad_date', `Дата должна быть в ближайшие ${MAX_DAYS_AHEAD} дней`);
+  }
+  const [trip] = await db.insert(trips).values({ id: nanoid(10), organizerId: user.id, startsAt }).returning();
+  await track('trip_created', { userId: user.id, tripId: trip!.id });
+  return c.json(await tripView(trip!, user.id), 201);
+});
+
+// Экран вылазки.
+tripRoutes.get('/:id', async (c) => {
+  const user = c.get('user');
+  const id = c.req.param('id');
+  const trip = await loadTrip(id);
+  if (!trip) return fail(c, 404, 'not_found', 'Вылазка не найдена');
+  if (trip.organizerId !== user.id) await track('trip_opened', { userId: user.id, tripId: id });
+  return c.json(await tripView(trip, user.id));
+});
+
+// 3. Участник отвечает на анкету (можно менять до запуска подбора).
+tripRoutes.put('/:id/answer', async (c) => {
+  const user = c.get('user');
+  const id = c.req.param('id');
+  const body = await parseBody(c, answerBody);
+  if (!body) return fail(c, 400, 'bad_request', 'Проверьте ответы анкеты');
+  const trip = await loadTrip(id);
+  if (!trip) return fail(c, 404, 'not_found', 'Вылазка не найдена');
+  if (trip.status !== 'collecting') {
+    return fail(c, 409, 'closed', 'Подбор уже запущен — теперь можно только голосовать');
+  }
+  const values = { ...body, updatedAt: new Date() };
+  await db
+    .insert(tripAnswers)
+    .values({ tripId: id, userId: user.id, ...values })
+    .onConflictDoUpdate({ target: [tripAnswers.tripId, tripAnswers.userId], set: values });
+  await track('answer_submitted', { userId: user.id, tripId: id, props: body });
+  return c.json(await tripView(trip, user.id));
+});
+
+// 4–5. Организатор запускает подбор (повторный вызов = «другие варианты»).
+tripRoutes.post('/:id/suggest', async (c) => {
+  const user = c.get('user');
+  const id = c.req.param('id');
+  const trip = await loadTrip(id);
+  if (!trip) return fail(c, 404, 'not_found', 'Вылазка не найдена');
+  if (trip.organizerId !== user.id) return fail(c, 403, 'forbidden', 'Подбор запускает организатор');
+  if (trip.status === 'decided') return fail(c, 409, 'decided', 'Место уже выбрано');
+
+  const answers = await db.select().from(tripAnswers).where(eq(tripAnswers.tripId, id));
+  if (answers.length === 0) return fail(c, 409, 'no_answers', 'Сначала заполните анкету');
+
+  const shown = await db
+    .select({ placeId: tripSuggestions.placeId })
+    .from(tripSuggestions)
+    .where(eq(tripSuggestions.tripId, id));
+  const allPlaces = await db.select().from(places);
+  const results = matchPlaces({
+    places: allPlaces,
+    answers,
+    startsAt: trip.startsAt,
+    excludePlaceIds: shown.map((s) => s.placeId),
+  });
+  if (results.length === 0) {
+    return fail(c, 409, 'nothing_left', 'Подходящих мест больше нет — попробуйте изменить время');
+  }
+
+  // Без транзакции (драйвер Neon по HTTP их не поддерживает), поэтому порядок важен:
+  // сначала новые варианты, потом переключение раунда, потом сброс голосов.
+  // Если шаг упадёт посередине, экран покажет прежний раунд, а повтор подбора всё исправит.
+  const round = trip.round + 1;
+  await db
+    .insert(tripSuggestions)
+    .values(results.map((r, i) => ({ tripId: id, placeId: r.placeId, round, rank: i, explanation: r.explanation })));
+  const [updated] = await db.update(trips).set({ round, status: 'voting' }).where(eq(trips.id, id)).returning();
+  await db.delete(votes).where(eq(votes.tripId, id)); // новая тройка — голосуем заново
+
+  await track(round === 1 ? 'suggestions_generated' : 'more_options_requested', {
+    userId: user.id,
+    tripId: id,
+    props: { round, answers: answers.length, placeIds: results.map((r) => r.placeId), relaxed: results[0]?.relaxed },
+  });
+  return c.json(await tripView(updated!, user.id));
+});
+
+// 6. Голосование: один голос на участника, можно переголосовать.
+tripRoutes.post('/:id/vote', async (c) => {
+  const user = c.get('user');
+  const id = c.req.param('id');
+  const body = await parseBody(c, voteBody);
+  if (!body) return fail(c, 400, 'bad_request', 'Выберите место');
+  const trip = await loadTrip(id);
+  if (!trip) return fail(c, 404, 'not_found', 'Вылазка не найдена');
+  if (trip.status !== 'voting') return fail(c, 409, 'not_voting', 'Сейчас голосование не идёт');
+
+  const options = await currentSuggestions(trip);
+  if (!options.some((o) => o.place.id === body.placeId)) {
+    return fail(c, 400, 'bad_place', 'Этого места нет среди вариантов');
+  }
+  await db
+    .insert(votes)
+    .values({ tripId: id, userId: user.id, placeId: body.placeId })
+    .onConflictDoUpdate({ target: [votes.tripId, votes.userId], set: { placeId: body.placeId, createdAt: new Date() } });
+  await track('vote_cast', { userId: user.id, tripId: id, props: { placeId: body.placeId } });
+  return c.json(await tripView(trip, user.id));
+});
+
+// 7. Организатор завершает голосование. При ничьей выбирает сам.
+tripRoutes.post('/:id/finish', async (c) => {
+  const user = c.get('user');
+  const id = c.req.param('id');
+  const body = await parseBody(c, finishBody);
+  if (!body) return fail(c, 400, 'bad_request', 'Некорректный запрос');
+  const trip = await loadTrip(id);
+  if (!trip) return fail(c, 404, 'not_found', 'Вылазка не найдена');
+  if (trip.organizerId !== user.id) return fail(c, 403, 'forbidden', 'Завершает организатор');
+  if (trip.status !== 'voting') return fail(c, 409, 'not_voting', 'Сейчас голосование не идёт');
+
+  const options = (await currentSuggestions(trip)).map((o) => o.place.id);
+  const tally = await voteTally(id);
+  // Считаем только голоса за текущую тройку.
+  const max = Math.max(0, ...options.map((p) => tally.get(p) ?? 0));
+  const leaders = max > 0 ? options.filter((p) => (tally.get(p) ?? 0) === max) : options;
+
+  let chosenId: number;
+  if (body.placeId !== undefined) {
+    if (!leaders.includes(body.placeId)) {
+      return fail(c, 400, 'bad_place', 'Выбрать можно только из лидеров голосования');
     }
-    const [trip] = await db
-      .insert(trips)
-      .values({ id: nanoid(10), organizerId: req.user.id, startsAt })
-      .returning();
-    await track('trip_created', { userId: req.user.id, tripId: trip!.id });
-    return reply.code(201).send(await tripView(trip!, req.user.id));
+    chosenId = body.placeId;
+  } else if (leaders.length === 1) {
+    chosenId = leaders[0]!;
+  } else {
+    return fail(c, 409, 'tie', 'Ничья — выберите место сами', { leaders });
+  }
+
+  const [updated] = await db
+    .update(trips)
+    .set({ status: 'decided', chosenPlaceId: chosenId, decidedAt: new Date() })
+    .where(eq(trips.id, id))
+    .returning();
+  const by = max > 0 && leaders.length === 1 ? 'vote' : 'organizer';
+  await track('place_chosen', { userId: user.id, tripId: id, props: { placeId: chosenId, round: trip.round, by } });
+  return c.json(await tripView(updated!, user.id));
+});
+
+// 2. Сообщение-приглашение для отправки в чат друзей.
+tripRoutes.post('/:id/share/invite', async (c) => {
+  const user = c.get('user');
+  const id = c.req.param('id');
+  const trip = await loadTrip(id);
+  if (!trip) return fail(c, 404, 'not_found', 'Вылазка не найдена');
+  const link = await tripLink(id);
+  if (!link) return fail(c, 503, 'bot_disabled', 'Бот не подключён');
+  const messageId = await prepareShareMessage(user.id, {
+    title: 'Приглашение на вылазку',
+    text: `${user.firstName} собирает вылазку: ${formatTripDate(trip.startsAt)}.\nОтветь за 30 секунд — подберём место, которое подойдёт всем.`,
+    buttons: [{ text: 'Участвовать', url: link }],
   });
+  return c.json({ preparedMessageId: messageId });
+});
 
-  // Экран вылазки.
-  app.get('/api/trips/:id', async (req, reply) => {
-    const { id } = tripParams.parse(req.params);
-    const trip = await loadTrip(id);
-    if (!trip) return fail(reply, 404, 'not_found', 'Вылазка не найдена');
-    if (trip.organizerId !== req.user.id) await track('trip_opened', { userId: req.user.id, tripId: id });
-    return tripView(trip, req.user.id);
+// 7. Итог для отправки в чат.
+tripRoutes.post('/:id/share/result', async (c) => {
+  const user = c.get('user');
+  const id = c.req.param('id');
+  const trip = await loadTrip(id);
+  if (!trip || !trip.chosenPlaceId) return fail(c, 409, 'not_decided', 'Место ещё не выбрано');
+  const place = (await db.query.places.findFirst({ where: eq(places.id, trip.chosenPlaceId) })) as Place;
+  const link = await tripLink(id);
+  if (!link) return fail(c, 503, 'bot_disabled', 'Бот не подключён');
+  // Название может уже содержать кавычки («Кафе «Маяк»») — тогда не добавляем свои.
+  const quoted = place.name.includes('«') ? place.name : `«${place.name}»`;
+  const messageId = await prepareShareMessage(user.id, {
+    title: `Идём в ${quoted}`,
+    text: `Идём в ${quoted}!\n${formatTripDate(trip.startsAt)}\n${place.address}`,
+    buttons: [
+      { text: 'Маршрут', url: yandexMapsLink(place) },
+      { text: 'Открыть вылазку', url: link },
+    ],
   });
+  return c.json({ preparedMessageId: messageId });
+});
 
-  // 3. Участник отвечает на анкету (можно менять до запуска подбора).
-  app.put('/api/trips/:id/answer', async (req, reply) => {
-    const { id } = tripParams.parse(req.params);
-    const body = answerBody.safeParse(req.body);
-    if (!body.success) return fail(reply, 400, 'bad_request', 'Проверьте ответы анкеты');
-    const trip = await loadTrip(id);
-    if (!trip) return fail(reply, 404, 'not_found', 'Вылазка не найдена');
-    if (trip.status !== 'collecting') {
-      return fail(reply, 409, 'closed', 'Подбор уже запущен — теперь можно только голосовать');
-    }
-    const values = { ...body.data, updatedAt: new Date() };
-    await db
-      .insert(tripAnswers)
-      .values({ tripId: id, userId: req.user.id, ...values })
-      .onConflictDoUpdate({ target: [tripAnswers.tripId, tripAnswers.userId], set: values });
-    await track('answer_submitted', { userId: req.user.id, tripId: id, props: body.data });
-    return tripView(trip, req.user.id);
-  });
-
-  // 4–5. Организатор запускает подбор (повторный вызов = «другие варианты»).
-  app.post('/api/trips/:id/suggest', async (req, reply) => {
-    const { id } = tripParams.parse(req.params);
-    const trip = await loadTrip(id);
-    if (!trip) return fail(reply, 404, 'not_found', 'Вылазка не найдена');
-    if (trip.organizerId !== req.user.id) return fail(reply, 403, 'forbidden', 'Подбор запускает организатор');
-    if (trip.status === 'decided') return fail(reply, 409, 'decided', 'Место уже выбрано');
-
-    const answers = await db.select().from(tripAnswers).where(eq(tripAnswers.tripId, id));
-    if (answers.length === 0) return fail(reply, 409, 'no_answers', 'Сначала заполните анкету');
-
-    const shown = await db
-      .select({ placeId: tripSuggestions.placeId })
-      .from(tripSuggestions)
-      .where(eq(tripSuggestions.tripId, id));
-    const allPlaces = await db.select().from(places);
-    const results = matchPlaces({
-      places: allPlaces,
-      answers,
-      startsAt: trip.startsAt,
-      excludePlaceIds: shown.map((s) => s.placeId),
-    });
-    if (results.length === 0) {
-      return fail(reply, 409, 'nothing_left', 'Подходящих мест больше нет — попробуйте изменить время');
-    }
-
-    const round = trip.round + 1;
-    const updated = await db.transaction(async (tx) => {
-      await tx.insert(tripSuggestions).values(
-        results.map((r, i) => ({ tripId: id, placeId: r.placeId, round, rank: i, explanation: r.explanation })),
-      );
-      await tx.delete(votes).where(eq(votes.tripId, id)); // новая тройка — голосуем заново
-      const [t] = await tx.update(trips).set({ round, status: 'voting' }).where(eq(trips.id, id)).returning();
-      return t!;
-    });
-
-    await track(round === 1 ? 'suggestions_generated' : 'more_options_requested', {
-      userId: req.user.id,
-      tripId: id,
-      props: { round, answers: answers.length, placeIds: results.map((r) => r.placeId), relaxed: results[0]?.relaxed },
-    });
-    return tripView(updated, req.user.id);
-  });
-
-  // 6. Голосование: один голос на участника, можно переголосовать.
-  app.post('/api/trips/:id/vote', async (req, reply) => {
-    const { id } = tripParams.parse(req.params);
-    const body = voteBody.safeParse(req.body);
-    if (!body.success) return fail(reply, 400, 'bad_request', 'Выберите место');
-    const trip = await loadTrip(id);
-    if (!trip) return fail(reply, 404, 'not_found', 'Вылазка не найдена');
-    if (trip.status !== 'voting') return fail(reply, 409, 'not_voting', 'Сейчас голосование не идёт');
-
-    const options = await currentSuggestions(trip);
-    if (!options.some((o) => o.place.id === body.data.placeId)) {
-      return fail(reply, 400, 'bad_place', 'Этого места нет среди вариантов');
-    }
-    await db
-      .insert(votes)
-      .values({ tripId: id, userId: req.user.id, placeId: body.data.placeId })
-      .onConflictDoUpdate({
-        target: [votes.tripId, votes.userId],
-        set: { placeId: body.data.placeId, createdAt: new Date() },
-      });
-    await track('vote_cast', { userId: req.user.id, tripId: id, props: { placeId: body.data.placeId } });
-    return tripView(trip, req.user.id);
-  });
-
-  // 7. Организатор завершает голосование. При ничьей выбирает сам.
-  app.post('/api/trips/:id/finish', async (req, reply) => {
-    const { id } = tripParams.parse(req.params);
-    const body = finishBody.safeParse(req.body ?? {});
-    if (!body.success) return fail(reply, 400, 'bad_request', 'Некорректный запрос');
-    const trip = await loadTrip(id);
-    if (!trip) return fail(reply, 404, 'not_found', 'Вылазка не найдена');
-    if (trip.organizerId !== req.user.id) return fail(reply, 403, 'forbidden', 'Завершает организатор');
-    if (trip.status !== 'voting') return fail(reply, 409, 'not_voting', 'Сейчас голосование не идёт');
-
-    const options = (await currentSuggestions(trip)).map((o) => o.place.id);
-    const tally = await voteTally(id);
-    const max = Math.max(0, ...tally.values());
-    const leaders = max > 0 ? options.filter((p) => tally.get(p) === max) : options;
-
-    let chosenId: number;
-    if (body.data.placeId !== undefined) {
-      if (!leaders.includes(body.data.placeId)) {
-        return fail(reply, 400, 'bad_place', 'Выбрать можно только из лидеров голосования');
-      }
-      chosenId = body.data.placeId;
-    } else if (leaders.length === 1) {
-      chosenId = leaders[0]!;
-    } else {
-      return reply.code(409).send({ error: 'tie', message: 'Ничья — выберите место сами', leaders });
-    }
-
-    const [updated] = await db
-      .update(trips)
-      .set({ status: 'decided', chosenPlaceId: chosenId, decidedAt: new Date() })
-      .where(eq(trips.id, id))
-      .returning();
-    const fromSuggestions = tally.size > 0 && leaders.length === 1 ? 'vote' : 'organizer';
-    await track('place_chosen', { userId: req.user.id, tripId: id, props: { placeId: chosenId, round: trip.round, by: fromSuggestions } });
-    return tripView(updated!, req.user.id);
-  });
-
-  // 2. Сообщение-приглашение для отправки в чат друзей.
-  app.post('/api/trips/:id/share/invite', async (req, reply) => {
-    const { id } = tripParams.parse(req.params);
-    const trip = await loadTrip(id);
-    if (!trip) return fail(reply, 404, 'not_found', 'Вылазка не найдена');
-    const link = tripLink(id);
-    if (!link) return fail(reply, 503, 'bot_disabled', 'Бот не подключён');
-    const messageId = await prepareShareMessage(req.user.id, {
-      title: 'Приглашение на вылазку',
-      text: `${req.user.firstName} собирает вылазку: ${formatTripDate(trip.startsAt)}.\nОтветь за 30 секунд — подберём место, которое подойдёт всем.`,
-      buttons: [{ text: 'Участвовать', url: link }],
-    });
-    return { preparedMessageId: messageId };
-  });
-
-  // 7. Итог для отправки в чат.
-  app.post('/api/trips/:id/share/result', async (req, reply) => {
-    const { id } = tripParams.parse(req.params);
-    const trip = await loadTrip(id);
-    if (!trip || !trip.chosenPlaceId) return fail(reply, 409, 'not_decided', 'Место ещё не выбрано');
-    const place = (await db.query.places.findFirst({ where: eq(places.id, trip.chosenPlaceId) })) as Place;
-    const link = tripLink(id);
-    if (!link) return fail(reply, 503, 'bot_disabled', 'Бот не подключён');
-    // Название может уже содержать кавычки («Кафе «Маяк»») — тогда не добавляем свои.
-    const quoted = place.name.includes('«') ? place.name : `«${place.name}»`;
-    const messageId = await prepareShareMessage(req.user.id, {
-      title: `Идём в ${quoted}`,
-      text: `Идём в ${quoted}!\n${formatTripDate(trip.startsAt)}\n${place.address}`,
-      buttons: [
-        { text: 'Маршрут', url: yandexMapsLink(place) },
-        { text: 'Открыть вылазку', url: link },
-      ],
-    });
-    return { preparedMessageId: messageId };
-  });
-
-  // События, которые знает только клиент (например, открытие маршрута).
-  app.post('/api/trips/:id/events', async (req, reply) => {
-    const { id } = tripParams.parse(req.params);
-    const body = z.object({ name: z.enum(['route_opened']) }).safeParse(req.body);
-    if (!body.success) return fail(reply, 400, 'bad_request', 'Неизвестное событие');
-    await track(body.data.name, { userId: req.user.id, tripId: id });
-    return reply.code(204).send();
-  });
-}
+// События, которые знает только клиент (например, открытие маршрута).
+tripRoutes.post('/:id/events', async (c) => {
+  const user = c.get('user');
+  const body = await parseBody(c, eventBody);
+  if (!body) return fail(c, 400, 'bad_request', 'Неизвестное событие');
+  await track(body.name, { userId: user.id, tripId: c.req.param('id') });
+  return c.body(null, 204);
+});

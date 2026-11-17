@@ -1,42 +1,30 @@
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import pg from 'pg';
-import { drizzle as drizzlePg, type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from './schema.js';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import type * as schema from './schema.js';
 
-// Две базы на выбор через DATABASE_URL:
-//   pglite:./.data/pglite          — встроенный PostgreSQL (WASM) прямо в процессе, без Docker.
-//                                    Удобно для разработки. Открыть базу может только один процесс сразу.
-//   postgres://user:pass@host/db   — обычный PostgreSQL (Docker, сервер в production).
+// Единая точка доступа к базе для всего кода. Конкретное подключение выбирает точка входа:
+//   Node.js (index.ts)   → db/node.ts:   встроенный PGlite или обычный PostgreSQL;
+//   Cloudflare (worker.ts) → db/worker.ts: Neon по HTTP.
+// API запросов у всех драйверов Drizzle одинаковый, поэтому тип общий.
 
-const url = process.env.DATABASE_URL ?? '';
-export const usingPglite = url.startsWith('pglite:');
+export type Db = NodePgDatabase<typeof schema>;
 
-// Корень репозитория: src/db (или dist/db) → apps/server → корень.
-const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url));
-export const migrationsFolder = fileURLToPath(new URL('../../drizzle', import.meta.url));
+let current: Db | null = null;
+let closer: () => Promise<void> = async () => {};
 
-let db: NodePgDatabase<typeof schema>;
-let closeDb: () => Promise<void>;
-
-if (usingPglite) {
-  const { PGlite } = await import('@electric-sql/pglite');
-  const { drizzle } = await import('drizzle-orm/pglite');
-  const { mkdirSync } = await import('node:fs');
-  const dataDir = resolve(repoRoot, url.slice('pglite:'.length));
-  mkdirSync(dataDir, { recursive: true });
-  const client = new PGlite(dataDir);
-  // API запросов у обоих драйверов одинаковый, поэтому используем общий тип.
-  db = drizzle(client, { schema }) as unknown as NodePgDatabase<typeof schema>;
-  closeDb = () => client.close();
-} else {
-  // DATABASE_SSL=no-verify — шифрованное соединение без проверки сертификата (для баз хостинга
-  // с собственным сертификатом). Тогда в самом DATABASE_URL не должно быть параметра sslmode.
-  const ssl = process.env.DATABASE_SSL === 'no-verify' ? { rejectUnauthorized: false } : undefined;
-  const pool = new pg.Pool({ connectionString: url, ssl });
-  db = drizzlePg(pool, { schema });
-  closeDb = () => pool.end();
+export function setDb(db: Db, close: () => Promise<void> = async () => {}): void {
+  current = db;
+  closer = close;
 }
 
-export { db, closeDb };
-export type Db = typeof db;
+/** Обращение `db.select(...)` идёт к подключению, которое выбрала точка входа. */
+export const db = new Proxy({} as Db, {
+  get(_target, key) {
+    if (!current) throw new Error('База не подключена: точка входа должна вызвать setDb()');
+    const value = Reflect.get(current, key, current);
+    return typeof value === 'function' ? value.bind(current) : value;
+  },
+});
+
+export function closeDb(): Promise<void> {
+  return closer();
+}

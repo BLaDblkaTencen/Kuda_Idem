@@ -1,49 +1,46 @@
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { MiddlewareHandler } from 'hono';
 import { config } from '../config.js';
 import { db } from '../db/client.js';
 import { users } from '../db/schema.js';
 import { validateInitData, type TelegramUser } from '../auth/telegram.js';
-
-declare module 'fastify' {
-  interface FastifyRequest {
-    user: { id: number; firstName: string };
-  }
-}
+import { fail, type AppEnv } from './types.js';
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 
 /**
- * Запрос пришёл с этого компьютера, а не через туннель из интернета.
+ * Запрос пришёл с этого компьютера, а не через туннель или из интернета.
  * Прокси Vite сохраняет исходный Host, поэтому запрос через *.lhr.life сюда не пройдёт.
  */
-function isLocalRequest(req: FastifyRequest): boolean {
-  const hosts = [req.headers.host, req.headers['x-forwarded-host']].filter((h): h is string => typeof h === 'string');
+function isLocalRequest(headers: { host?: string; forwarded?: string }): boolean {
+  const hosts = [headers.host, headers.forwarded].filter((h): h is string => typeof h === 'string');
   return hosts.length > 0 && hosts.every((h) => LOCAL_HOSTS.has(h.replace(/:\d+$/, '').toLowerCase()));
 }
 
 /**
  * Определяет пользователя по заголовку `Authorization: tma <initData>`.
  * При разработке (DEV_AUTH=true) можно вместо этого передать `X-Dev-User-Id` и `X-Dev-User-Name` —
- * но только в запросах с localhost: через туннель так войти нельзя.
+ * но только в запросах с localhost: через туннель или из интернета так войти нельзя.
  */
-export async function requireUser(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+export const requireUser: MiddlewareHandler<AppEnv> = async (c, next) => {
   let tgUser: TelegramUser | null = null;
 
-  const auth = req.headers.authorization;
+  const auth = c.req.header('authorization');
+  const devId = c.req.header('x-dev-user-id');
   if (auth?.startsWith('tma ')) {
     tgUser = validateInitData(auth.slice(4), config.BOT_TOKEN)?.user ?? null;
-  } else if (config.devAuth && isLocalRequest(req) && req.headers['x-dev-user-id']) {
-    const id = Number(req.headers['x-dev-user-id']);
-    const name = req.headers['x-dev-user-name'];
+  } else if (
+    config.devAuth &&
+    devId &&
+    isLocalRequest({ host: c.req.header('host'), forwarded: c.req.header('x-forwarded-host') })
+  ) {
+    const id = Number(devId);
+    const name = c.req.header('x-dev-user-name');
     if (Number.isSafeInteger(id) && id > 0) {
-      tgUser = { id, first_name: typeof name === 'string' && name ? decodeURIComponent(name) : `Тестер ${id}` };
+      tgUser = { id, first_name: name ? decodeURIComponent(name) : `Тестер ${id}` };
     }
   }
 
-  if (!tgUser) {
-    await reply.code(401).send({ error: 'unauthorized', message: 'Откройте приложение из Telegram' });
-    return;
-  }
+  if (!tgUser) return fail(c, 401, 'unauthorized', 'Откройте приложение из Telegram');
 
   // Обновляем имя и фото при каждом входе — пользователь мог их сменить.
   const profile = {
@@ -57,5 +54,6 @@ export async function requireUser(req: FastifyRequest, reply: FastifyReply): Pro
     .values({ id: tgUser.id, ...profile })
     .onConflictDoUpdate({ target: users.id, set: profile });
 
-  req.user = { id: tgUser.id, firstName: tgUser.first_name };
-}
+  c.set('user', { id: tgUser.id, firstName: tgUser.first_name });
+  await next();
+};
