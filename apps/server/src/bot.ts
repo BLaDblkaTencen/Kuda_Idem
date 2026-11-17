@@ -28,15 +28,26 @@ export async function startBot(): Promise<void> {
       await ctx.reply('Приложение ещё не подключено: задайте WEB_APP_URL в .env.');
       return;
     }
-    await ctx.reply('Соберите друзей и за пару минут выберите, куда пойти.', {
-      reply_markup: new InlineKeyboard().webApp('Собрать вылазку', config.WEB_APP_URL),
-    });
+    // /start <id вылазки> — открыть сразу нужную вылазку.
+    const tripId = /^[\w-]{1,32}$/.test(ctx.match) ? ctx.match : '';
+    const url = tripId ? `${config.WEB_APP_URL}#/trip/${tripId}` : config.WEB_APP_URL;
+    await ctx.reply(
+      tripId ? 'Вас позвали на вылазку — ответьте на 4 вопроса.' : 'Соберите друзей и за пару минут выберите, куда пойти.',
+      { reply_markup: new InlineKeyboard().webApp(tripId ? 'Открыть вылазку' : 'Собрать вылазку', url) },
+    );
   });
 
   bot.catch((err) => console.error('Ошибка бота:', err.error));
 
   const me = await bot.api.getMe();
   botUsername = me.username;
+
+  // Кнопка «Куда идём?» слева от поля ввода в чате с ботом — всегда на актуальный адрес приложения.
+  if (config.WEB_APP_URL.startsWith('https://')) {
+    await bot.api.setChatMenuButton({
+      menu_button: { type: 'web_app', text: 'Куда идём?', web_app: { url: config.WEB_APP_URL } },
+    });
+  }
   // Long polling удобен для разработки; для production позже переключимся на webhook.
   void bot.start({ drop_pending_updates: true });
   console.log(`Бот @${botUsername} запущен`);

@@ -13,6 +13,7 @@
     "db:seed": "npm run db:seed -w apps/server",
     "dev": "npm run dev -w apps/server",
     "dev:web": "npm run dev -w apps/web",
+    "telegram": "node scripts/telegram-dev.mjs",
     "build:web": "npm run build -w apps/web",
     "test": "npm test -w apps/server",
     "smoke": "npm run smoke -w apps/server",

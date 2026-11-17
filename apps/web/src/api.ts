@@ -23,7 +23,8 @@ export const DEV_USERS = [
 ] as const;
 
 /** Переключатель «от чьего имени» работает только в браузере при разработке. */
-export const devMode = !inTelegram && import.meta.env.DEV;
+export const devMode =
+  !inTelegram && import.meta.env.DEV && ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
 export function getDevUser(): (typeof DEV_USERS)[number] {
   let id: number | null = null;
