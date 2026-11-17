@@ -47,7 +47,7 @@ export interface Trip {
   organizer: Person | undefined;
   participants: Person[];
   myAnswer: Answer | null;
-  suggestions: Array<{ place: PlaceCard; explanation: string; votes: number }>;
+  suggestions: Array<{ place: PlaceCard; explanation: string; votes: number; voters: Person[] }>;
   myVote: number | null;
   chosenPlace: PlaceCard | null;
   link: string | null;

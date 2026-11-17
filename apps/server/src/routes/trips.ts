@@ -73,6 +73,8 @@ async function voteTally(tripId: string): Promise<Map<number, number>> {
   return tally;
 }
 
+const person = (u: typeof users.$inferSelect) => ({ id: u.id, firstName: u.firstName, photoUrl: u.photoUrl });
+
 /** Всё, что нужно экрану вылазки, одним ответом. */
 async function tripView(trip: Trip, userId: number) {
   const [organizer, answers, suggestions, tally, allVotes, chosen, link] = await Promise.all([
@@ -84,7 +86,11 @@ async function tripView(trip: Trip, userId: number) {
       .where(eq(tripAnswers.tripId, trip.id)),
     currentSuggestions(trip),
     voteTally(trip.id),
-    db.select().from(votes).where(eq(votes.tripId, trip.id)),
+    db
+      .select({ placeId: votes.placeId, user: users })
+      .from(votes)
+      .innerJoin(users, eq(users.id, votes.userId))
+      .where(eq(votes.tripId, trip.id)),
     trip.chosenPlaceId ? db.query.places.findFirst({ where: eq(places.id, trip.chosenPlaceId) }) : undefined,
     tripLink(trip.id),
   ]);
@@ -98,7 +104,7 @@ async function tripView(trip: Trip, userId: number) {
     startsAtLabel: formatTripDate(trip.startsAt),
     isOrganizer: trip.organizerId === userId,
     organizer: organizer && { id: organizer.id, firstName: organizer.firstName, photoUrl: organizer.photoUrl },
-    participants: answers.map((a) => ({ id: a.user.id, firstName: a.user.firstName, photoUrl: a.user.photoUrl })),
+    participants: answers.map((a) => person(a.user)),
     myAnswer: mine
       ? { budget: mine.budget, moods: mine.moods, district: mine.district, constraints: mine.constraints }
       : null,
@@ -106,8 +112,9 @@ async function tripView(trip: Trip, userId: number) {
       place: placeCard(s.place),
       explanation: s.suggestion.explanation,
       votes: tally.get(s.place.id) ?? 0,
+      voters: allVotes.filter((v) => v.placeId === s.place.id).map((v) => person(v.user)),
     })),
-    myVote: allVotes.find((v) => v.userId === userId)?.placeId ?? null,
+    myVote: allVotes.find((v) => v.user.id === userId)?.placeId ?? null,
     chosenPlace: chosen ? placeCard(chosen) : null,
     link,
   };

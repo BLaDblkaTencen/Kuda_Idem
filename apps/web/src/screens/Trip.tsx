@@ -175,7 +175,6 @@ function Voting({ trip, setTrip }: StepProps) {
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
   const [tieLeaders, setTieLeaders] = useState<number[] | null>(null);
-  const totalVotes = trip.suggestions.reduce((s, x) => s + x.votes, 0);
 
   async function run(key: string, action: () => Promise<TripData>) {
     setBusy(key);
@@ -197,77 +196,88 @@ function Voting({ trip, setTrip }: StepProps) {
     }
   }
 
+  const voted = trip.suggestions.reduce((n, s) => n + s.voters.length, 0);
+  const people = Math.max(trip.participants.length, voted);
+
   return (
     <>
-      <div className="stack">
+      <div className="row between">
         <h2 className="place-name">{tieLeaders ? 'Ничья! Решающий голос за вами' : 'Голосуем'}</h2>
-        <p className="muted">
-          {tieLeaders
-            ? 'Выберите одно из лидирующих мест.'
-            : `Выберите, куда хотите пойти. Голос можно поменять. Проголосовали: ${totalVotes}.`}
-        </p>
+        {!tieLeaders && (
+          <span className="hint">
+            проголосовали {voted} из {people}
+          </span>
+        )}
       </div>
+      {tieLeaders && <p className="muted">Выберите одно из лидирующих мест.</p>}
 
-      {trip.suggestions.map(({ place, explanation, votes }) => {
+      {trip.suggestions.map(({ place, voters }) => {
         const mine = trip.myVote === place.id;
-        const share = totalVotes ? Math.round((votes / totalVotes) * 100) : 0;
         const isLeaderInTie = tieLeaders?.includes(place.id);
         return (
-          <article key={place.id} className={`card${mine ? ' accent' : ''}`}>
-            <div className="row between" style={{ alignItems: 'flex-start' }}>
-              <div className="stack" style={{ gap: 2 }}>
+          <article key={place.id} className={`card vote-card${mine ? ' accent' : ''}`}>
+            <div>
+              <div className="row between" style={{ alignItems: 'flex-start' }}>
                 <h3 className="place-name">{place.title}</h3>
-                <span className="place-meta">
-                  {place.districtLabel}
-                  {place.isTestData && ' · тестовое место'}
+                <span className="price">{priceLabel(place.avgCheck)}</span>
+              </div>
+              <span className="place-meta">
+                {place.districtLabel}
+                {place.isTestData && ' · тестовое место'}
+              </span>
+            </div>
+            {place.description && <p className="vote-desc">{place.description}</p>}
+            <div className="row between">
+              <div className="voters">
+                {voters.length > 0 && (
+                  <div className="avatar-stack">
+                    {voters.slice(0, 4).map((v) => (
+                      <Avatar key={v.id} person={v} />
+                    ))}
+                  </div>
+                )}
+                <span className="hint">
+                  {voters.length} {plural(voters.length, 'голос', 'голоса', 'голосов')}
                 </span>
               </div>
-              <span className="price">{priceLabel(place.avgCheck)}</span>
-            </div>
-            {place.description && <p>{place.description}</p>}
-            <p className="why">{explanation}</p>
-            <div className="row between">
-              <span className="hint">
-                {votes} {plural(votes, 'голос', 'голоса', 'голосов')}
-              </span>
-              <button className="link-btn hint" onClick={() => openExternal(place.mapsUrl)}>
-                На карте
-              </button>
-            </div>
-            <div className="votes-bar" aria-hidden>
-              <div style={{ width: `${share}%` }} />
-            </div>
-            {tieLeaders ? (
-              isLeaderInTie && (
-                <button className="btn" disabled={!!busy} onClick={() => void run(`pick${place.id}`, () => api.finish(trip.id, place.id))}>
-                  Идём сюда
+              <div className="row" style={{ gap: 14 }}>
+                <button className="link-btn" onClick={() => openExternal(place.mapsUrl)}>
+                  Карта
                 </button>
-              )
-            ) : (
-              <button
-                className={`btn${mine ? '' : ' secondary'}`}
-                disabled={!!busy}
-                onClick={() => {
-                  haptic.tap();
-                  void run(`vote${place.id}`, () => api.vote(trip.id, place.id));
-                }}
-              >
-                {mine ? 'Ваш голос ✓' : 'Голосую за это'}
-              </button>
-            )}
+                {tieLeaders ? (
+                  isLeaderInTie && (
+                    <button className="pill on" disabled={!!busy} onClick={() => void run(`pick${place.id}`, () => api.finish(trip.id, place.id))}>
+                      Идём сюда
+                    </button>
+                  )
+                ) : (
+                  <button
+                    className={`pill${mine ? ' on' : ''}`}
+                    disabled={!!busy}
+                    aria-pressed={mine}
+                    onClick={() => {
+                      haptic.tap();
+                      void run(`vote${place.id}`, () => api.vote(trip.id, place.id));
+                    }}
+                  >
+                    {mine ? '✓ Ваш голос' : 'Голосую'}
+                  </button>
+                )}
+              </div>
+            </div>
           </article>
         );
       })}
 
       {trip.isOrganizer && !tieLeaders && (
-        <button className="btn secondary" disabled={!!busy} onClick={() => void run('more', () => api.suggest(trip.id))}>
+        <button className="link-btn center" disabled={!!busy} onClick={() => void run('more', () => api.suggest(trip.id))}>
           {busy === 'more' ? 'Ищем…' : 'Другие варианты'}
         </button>
       )}
 
       {trip.isOrganizer ? (
         !tieLeaders && (
-          <BottomBar hint={totalVotes === 0 ? 'Пока никто не проголосовал — выбор будет за вами' : undefined}>
+          <BottomBar hint={voted === 0 ? 'Пока никто не проголосовал — выбор будет за вами' : undefined}>
             <button className="btn" disabled={!!busy} onClick={() => void run('finish', () => api.finish(trip.id))}>
               {busy === 'finish' ? 'Подводим итог…' : 'Завершить голосование'}
             </button>
