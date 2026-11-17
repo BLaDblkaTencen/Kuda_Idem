@@ -30,7 +30,10 @@ if (usingPglite) {
   db = drizzle(client, { schema }) as unknown as NodePgDatabase<typeof schema>;
   closeDb = () => client.close();
 } else {
-  const pool = new pg.Pool({ connectionString: url });
+  // DATABASE_SSL=no-verify — шифрованное соединение без проверки сертификата (для баз хостинга
+  // с собственным сертификатом). Тогда в самом DATABASE_URL не должно быть параметра sslmode.
+  const ssl = process.env.DATABASE_SSL === 'no-verify' ? { rejectUnauthorized: false } : undefined;
+  const pool = new pg.Pool({ connectionString: url, ssl });
   db = drizzlePg(pool, { schema });
   closeDb = () => pool.end();
 }

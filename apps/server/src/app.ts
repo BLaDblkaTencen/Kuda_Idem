@@ -1,6 +1,9 @@
+import { existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { config } from './config.js';
+import fastifyStatic from '@fastify/static';
+import { config, repoRoot } from './config.js';
 import { placeRoutes } from './routes/places.js';
 import { tripRoutes } from './routes/trips.js';
 import {
@@ -40,6 +43,23 @@ export async function buildApp() {
 
   await app.register(placeRoutes);
   await app.register(tripRoutes);
+
+  // Собранные экраны Mini App отдаёт этот же сервер — всё приложение живёт на одном HTTPS-адресе.
+  const webDist = config.WEB_DIST_DIR ? resolve(config.WEB_DIST_DIR) : resolve(repoRoot, 'apps/web/dist');
+  if (existsSync(join(webDist, 'index.html'))) {
+    await app.register(fastifyStatic, {
+      root: webDist,
+      cacheControl: false,
+      setHeaders(res, filePath) {
+        // Файлы из assets/ имеют хэш в имени — их можно кэшировать навсегда, index.html — никогда.
+        res.header(
+          'cache-control',
+          /[\\/]assets[\\/]/.test(filePath) ? 'public, max-age=31536000, immutable' : 'no-cache',
+        );
+      },
+    });
+    app.log.info(`Экраны отдаются из ${webDist}`);
+  }
 
   app.setErrorHandler((err: { statusCode?: number; message?: string }, _req, reply) => {
     app.log.error(err);

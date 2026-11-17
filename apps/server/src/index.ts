@@ -2,6 +2,14 @@ import { config } from './config.js';
 import { buildApp } from './app.js';
 import { startBot, stopBot } from './bot.js';
 import { closeDb } from './db/client.js';
+import { runMigrations, seedTestPlacesIfEmpty } from './db/setup.js';
+
+// Таблицы создаются и обновляются сами при каждом запуске — на хостинге не нужно запускать миграции руками.
+await runMigrations();
+if (config.SEED_TEST_PLACES) {
+  const added = await seedTestPlacesIfEmpty();
+  if (added) console.log(`База была пустой — загружено тестовых мест: ${added}`);
+}
 
 const app = await buildApp();
 await app.listen({ port: config.PORT, host: '0.0.0.0' });

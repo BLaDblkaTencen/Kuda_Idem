@@ -1,11 +1,6 @@
-import { closeDb, db, migrationsFolder, usingPglite } from './client.js';
+import { closeDb } from './client.js';
+import { runMigrations } from './setup.js';
 
-if (usingPglite) {
-  const { migrate } = await import('drizzle-orm/pglite/migrator');
-  await migrate(db as never, { migrationsFolder });
-} else {
-  const { migrate } = await import('drizzle-orm/node-postgres/migrator');
-  await migrate(db, { migrationsFolder });
-}
+await runMigrations();
 console.log('Миграции применены');
 await closeDb();

@@ -1,4 +1,4 @@
-import { Bot, InlineKeyboard } from 'grammy';
+import { Bot, GrammyError, InlineKeyboard } from 'grammy';
 import type { InlineQueryResultArticle } from 'grammy/types';
 import { config } from './config.js';
 
@@ -48,12 +48,34 @@ export async function startBot(): Promise<void> {
       menu_button: { type: 'web_app', text: 'Куда идём?', web_app: { url: config.WEB_APP_URL } },
     });
   }
-  // Long polling удобен для разработки; для production позже переключимся на webhook.
-  void bot.start({ drop_pending_updates: true });
+  startPolling(bot);
   console.log(`Бот @${botUsername} запущен`);
 }
 
+let stopping = false;
+const RESTART_DELAY_MS = 10_000;
+
+/**
+ * Long polling с автоперезапуском. Ошибка 409 значит, что этого же бота опрашивает другой процесс:
+ * при обновлении на хостинге старая версия ещё не погасла, или локально запущен `npm run telegram`.
+ * Без перехвата такая ошибка уронила бы весь сервер.
+ */
+function startPolling(b: Bot): void {
+  b.start({ drop_pending_updates: true }).catch((err: unknown) => {
+    if (stopping) return;
+    const conflict = err instanceof GrammyError && err.error_code === 409;
+    console.error(
+      conflict
+        ? 'Этого бота уже опрашивает другой процесс (409) — повторю через 10 с. Остановите лишний запуск.'
+        : 'Опрос бота прервался с ошибкой — повторю через 10 с:',
+      conflict ? '' : err,
+    );
+    setTimeout(() => startPolling(b), RESTART_DELAY_MS);
+  });
+}
+
 export async function stopBot(): Promise<void> {
+  stopping = true;
   await bot?.stop();
 }
 

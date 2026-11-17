@@ -1,4 +1,8 @@
+import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
+
+// Корень репозитория: src/config.ts (или dist/config.js) → apps/server → корень.
+export const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 
 const schema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL не задан — скопируйте .env.example в .env'),
@@ -9,6 +13,13 @@ const schema = z.object({
   MINI_APP_SHORT_NAME: z.string().default(''),
   CORS_ORIGIN: z.string().default(''),
   DEV_AUTH: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true'),
+  // Папка собранных экранов (apps/web/dist). Пусто — путь по умолчанию внутри репозитория.
+  WEB_DIST_DIR: z.string().default(''),
+  // Загрузить 18 тестовых мест при запуске, если в базе ещё нет ни одного места.
+  SEED_TEST_PLACES: z
     .string()
     .default('false')
     .transform((v) => v === 'true'),
