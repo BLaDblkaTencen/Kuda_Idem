@@ -71,12 +71,15 @@ export function Trip({ tripId }: { tripId: string }) {
 
   return (
     <>
-      <header className="stack">
-        <p className="muted">
-          {trip.isOrganizer ? 'Вы собираете вылазку' : `${trip.organizer?.firstName ?? 'Друг'} собирает вылазку`}
-        </p>
-        <h1 className="title">{capitalize(trip.startsAtLabel)}</h1>
-      </header>
+      {/* В итоге дата есть в билете — шапку не дублируем. */}
+      {trip.status !== 'decided' && (
+        <header className="stack">
+          <p className="muted">
+            {trip.isOrganizer ? 'Вы собираете вылазку' : `${trip.organizer?.firstName ?? 'Друг'} собирает вылазку`}
+          </p>
+          <h1 className="title">{capitalize(trip.startsAtLabel)}</h1>
+        </header>
+      )}
       {trip.status === 'collecting' && <Collecting trip={trip} setTrip={setTrip} />}
       {trip.status === 'voting' && <Voting trip={trip} setTrip={setTrip} />}
       {trip.status === 'decided' && <Decided trip={trip} />}
@@ -317,42 +320,85 @@ function Voting({ trip, setTrip }: StepProps) {
 
 // ---------- 3. Итог ----------
 
+// Дата и время встречи по Севастополю для билета: «Пт, 20 ноября» и «19:00».
+const ticketDate = new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow', weekday: 'short', day: 'numeric', month: 'long' });
+const ticketTime = new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+
+/** «Маша», «Маша и Петя», «Маша, Петя и Дима» */
+function namesList(names: string[]): string {
+  if (names.length <= 1) return names.join('');
+  return `${names.slice(0, -1).join(', ')} и ${names[names.length - 1]}`;
+}
+
 function Decided({ trip }: { trip: TripData }) {
   const share = useShare();
   const place = trip.chosenPlace;
   if (!place) return null;
 
+  const when = new Date(trip.startsAt);
+  const date = capitalize(ticketDate.format(when).replace('.', ''));
+  // У парков и бульваров адрес совпадает с названием — тогда в «Где» пишем район.
+  const sameAddress = place.address.toLowerCase() === place.name.toLowerCase();
+  const people = trip.participants;
+
   return (
     <>
-      <div className="card accent">
-        <div className="hero-emoji" aria-hidden>
-          🎉
-        </div>
-        {/* Та же фраза, что в карточке от бота: «Идём на Приморский бульвар», «Идём в кинотеатр «Победа»». */}
-        <h2 className="result-title">Идём {place.goTo}</h2>
-        <div className="vote-head">
-          <div className="place-icon" aria-hidden>
-            <span>{place.icon}</span>
-          </div>
-          <div className="vote-title">
-            {/* У парков и бульваров адрес совпадает с названием — тогда не повторяем его. */}
-            {place.address.toLowerCase() !== place.name.toLowerCase() && <span>{place.address}</span>}
-            <span className="place-meta">
-              {place.districtLabel}
-              {!place.isFree && ` · ${priceLabel(place.avgCheck)}`}
-            </span>
-          </div>
-        </div>
-        {place.description && <p className="muted">{place.description}</p>}
-        <PlaceTags tags={place.tags} />
-      </div>
-      <p className="muted center">Карточка с деталями встречи пришла каждому в чат с ботом</p>
+      <p className="section-title">Решено ✓</p>
 
-      <button className="btn secondary" onClick={() => void share(trip, 'result')}>
-        Отправить итог в чат
-      </button>
+      {/* Билет: место и метки сверху, линия отреза, внизу «Когда» и «Где». */}
+      <div className="ticket">
+        <div className="ticket-top">
+          <div className="vote-head">
+            <div className="place-icon" aria-hidden>
+              <span>{place.icon}</span>
+            </div>
+            <div className="vote-title">
+              <h2 className="place-name">{place.title}</h2>
+              {/* Район — либо здесь, либо в «Где» (у парков, где адреса нет), но не дважды. */}
+              {(!sameAddress || !place.isFree) && (
+                <span className="place-meta">
+                  {!sameAddress && place.districtLabel}
+                  {!sameAddress && !place.isFree && ' · '}
+                  {!place.isFree && <span className="nowrap">{priceLabel(place.avgCheck)}</span>}
+                </span>
+              )}
+            </div>
+          </div>
+          <PlaceTags tags={place.tags} />
+        </div>
+        <div className="ticket-cut" aria-hidden />
+        <div className="ticket-bottom">
+          <div>
+            <small>Когда</small>
+            <b>{date}</b>
+            <span className="place-meta">в {ticketTime.format(when)}</span>
+          </div>
+          <div>
+            <small>Где</small>
+            <b>{sameAddress ? place.districtLabel : place.address}</b>
+          </div>
+        </div>
+      </div>
+
+      {people.length > 0 && (
+        <div className="row going">
+          <div className="avatar-stack">
+            {people.slice(0, 5).map((p) => (
+              <Avatar key={p.id} person={p} />
+            ))}
+          </div>
+          <span className="muted">
+            {people.length === 1 ? 'Идёт' : 'Идут'} {namesList(people.map((p) => p.firstName))}
+          </span>
+        </div>
+      )}
+
+      {place.description && <p className="muted ticket-desc">{place.description}</p>}
 
       <BottomBar>
+        <button className="btn secondary" onClick={() => void share(trip, 'result')}>
+          Отправить итог в чат
+        </button>
         <button
           className="btn"
           onClick={() => {
