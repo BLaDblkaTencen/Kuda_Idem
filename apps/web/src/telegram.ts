@@ -33,8 +33,6 @@ const tg: TgWebApp | undefined = window.Telegram?.WebApp;
 export const inTelegram = Boolean(tg?.initData);
 export const initData = tg?.initData ?? '';
 export const startParam = tg?.initDataUnsafe.start_param;
-/** Имя пользователя из Telegram (без проверки подписи — только для показа на экране). */
-export const myFirstName = tg?.initDataUnsafe.user?.first_name;
 
 export function initTelegram(): void {
   if (!inTelegram || !tg) return;

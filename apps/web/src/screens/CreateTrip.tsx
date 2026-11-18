@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
-import { api, ApiError, devMode, getDevUser } from '../api';
+import { api, ApiError } from '../api';
 import { useShare } from '../share';
-import { haptic, myFirstName } from '../telegram';
+import { haptic } from '../telegram';
 import { BottomBar, navigate, useSingleFlight } from '../ui';
 
 const QUICK_TIMES = ['18:00', '19:00', '20:00', '21:00', '22:00'];
@@ -28,9 +28,6 @@ function cityDays(): Day[] {
 
 const toStartsAt = (day: string, time: string) => `${day}T${time}:00+03:00`;
 const isPast = (day: string, time: string) => Date.parse(toStartsAt(day, time)) < Date.now() + MIN_LEAD_MS;
-
-/** «пятница, 20 ноября» — как в сообщении-приглашении от бота */
-const dayInMessage = (iso: string) => dateLong.format(new Date(`${iso}T00:00:00Z`));
 
 /** «Пятница, 20 ноября» */
 function dayLabel(iso: string): string {
@@ -112,8 +109,6 @@ export function CreateTrip() {
       : past
         ? 'Это время уже прошло — выберите другое'
         : undefined;
-  // Имя в превью — как его увидят друзья в сообщении от бота.
-  const name = myFirstName ?? (devMode ? getDevUser().name : 'Организатор');
 
   return (
     <>
@@ -122,19 +117,11 @@ export function CreateTrip() {
         <p className="subtitle">Так приглашение увидят друзья в чате</p>
       </header>
 
-      {/* Тот же текст, что бот пришлёт в чат (routes/trips.ts → share/invite). */}
-      <div className="invite-preview" aria-live="polite">
-        <div className="invite-bubble">
-          {name} собирает вылазку:{' '}
-          <b className="invite-when">
-            {dayInMessage(day)} в {complete ? time : '—:—'}
-          </b>
-          .<br />
-          Ответь за 30 секунд — подберём место, которое подойдёт всем.
-        </div>
-        <div className="invite-button" aria-hidden>
-          Участвовать
-        </div>
+      <div className="invite-plate" aria-live="polite">
+        <small>Собираемся:</small>
+        <b>
+          {dayLabel(day)} · {complete ? time : '—:—'}
+        </b>
       </div>
 
       <section>
