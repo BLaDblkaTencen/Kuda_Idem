@@ -8,7 +8,7 @@ let dictCache: Dictionaries | null = null;
 
 export function Survey({ tripId }: { tripId: string }) {
   const [dict, setDict] = useState<Dictionaries | null>(dictCache);
-  const [answer, setAnswer] = useState<Answer>({ budget: null, moods: [], district: null, constraints: [] });
+  const [answer, setAnswer] = useState<Answer>({ budget: null, moods: [], districts: [], constraints: [] });
   const [budgetChosen, setBudgetChosen] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -100,14 +100,18 @@ export function Survey({ tripId }: { tripId: string }) {
       </section>
 
       <section>
-        <h2 className="section-title">Откуда удобнее добираться</h2>
+        <h2 className="section-title">Удобные районы · можно несколько</h2>
         <div className="card">
-          <div className="chips" role="group" aria-label="Район">
-            <Chip selected={answer.district === null} onClick={() => setAnswer({ ...answer, district: null })}>
+          <div className="chips" role="group" aria-label="Районы">
+            <Chip selected={answer.districts.length === 0} onClick={() => setAnswer({ ...answer, districts: [] })}>
               любой район
             </Chip>
             {dict.districts.map((d) => (
-              <Chip key={d.key} selected={answer.district === d.key} onClick={() => setAnswer({ ...answer, district: d.key })}>
+              <Chip
+                key={d.key}
+                selected={answer.districts.includes(d.key)}
+                onClick={() => setAnswer({ ...answer, districts: toggle(answer.districts, d.key) })}
+              >
                 {d.label}
               </Chip>
             ))}

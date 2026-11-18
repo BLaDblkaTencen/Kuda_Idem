@@ -36,5 +36,18 @@ export const MIGRATIONS: ReadonlyArray<{ tag: string; statements: readonly strin
     "statements": [
       "ALTER TABLE \"places\" ADD COLUMN \"kind\" text;"
     ]
+  },
+  {
+    "tag": "0003_sad_johnny_storm",
+    "statements": [
+      "ALTER TABLE \"trip_answers\" ADD COLUMN \"districts\" text[] DEFAULT '{}' NOT NULL;",
+      "-- Перенос старых ответов: один район → список из одного района.\nUPDATE \"trip_answers\" SET \"districts\" = ARRAY[\"district\"] WHERE \"district\" IS NOT NULL;"
+    ]
+  },
+  {
+    "tag": "0004_worried_famine",
+    "statements": [
+      "ALTER TABLE \"trip_answers\" DROP COLUMN \"district\";"
+    ]
   }
 ];

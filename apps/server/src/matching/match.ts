@@ -32,7 +32,7 @@ export interface MatchAnswer {
   userId: number;
   budget: number | null; // ₽ на человека, null = не важно
   moods: string[]; // пусто = «всё равно»
-  district: string | null; // null = любой
+  districts: string[]; // откуда удобно добираться; пусто = любой район
   constraints: string[];
 }
 
@@ -138,15 +138,17 @@ function violatesConstraints(place: MatchPlace, answers: MatchAnswer[], onlyStri
   );
 }
 
-function districtFits(answerDistrict: string | null, placeDistrict: string): boolean {
-  if (answerDistrict === null) return true;
-  if (answerDistrict === placeDistrict) return true;
-  return (DISTRICT_NEIGHBORS[answerDistrict as District] ?? []).includes(placeDistrict as District);
+/** Место в одном из выбранных районов или по соседству с любым из них. Ничего не выбрано — подходит всё. */
+function districtFits(answerDistricts: string[], placeDistrict: string): boolean {
+  if (answerDistricts.length === 0) return true;
+  return answerDistricts.some(
+    (d) => d === placeDistrict || (DISTRICT_NEIGHBORS[d as District] ?? []).includes(placeDistrict as District),
+  );
 }
 
 export function participantScore(place: MatchPlace, answer: MatchAnswer): number {
   const moodScore = answer.moods.length === 0 ? 1 : answer.moods.filter((m) => place.moods.includes(m)).length;
-  const districtScore = districtFits(answer.district, place.district) ? 1 : 0;
+  const districtScore = districtFits(answer.districts, place.district) ? 1 : 0;
   return moodScore + districtScore;
 }
 
@@ -187,8 +189,8 @@ function explain(place: MatchPlace, answers: MatchAnswer[], relaxed: RelaxableFi
   parts.push(...features);
 
   const districtLabel = DISTRICTS[place.district as District] ?? place.district;
-  const allFit = answers.every((a) => districtFits(a.district, place.district));
-  parts.push(allFit && answers.some((a) => a.district !== null) ? `${districtLabel}, удобно всем` : districtLabel);
+  const allFit = answers.every((a) => districtFits(a.districts, place.district));
+  parts.push(allFit && answers.some((a) => a.districts.length > 0) ? `${districtLabel}, удобно всем` : districtLabel);
 
   for (const r of relaxed) parts.push(`не совпало: ${RELAX_NOTES[r]}`);
   return parts.join(' · ');

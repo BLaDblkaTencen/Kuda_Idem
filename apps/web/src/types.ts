@@ -31,7 +31,7 @@ export interface Person {
 export interface Answer {
   budget: number | null;
   moods: string[];
-  district: string | null;
+  districts: string[]; // пусто = любой район
   constraints: string[];
 }
 

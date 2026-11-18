@@ -22,6 +22,20 @@
       "when": 1794948459678,
       "tag": "0002_nebulous_doctor_doom",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795009366413,
+      "tag": "0003_sad_johnny_storm",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795009375450,
+      "tag": "0004_worried_famine",
+      "breakpoints": true
     }
   ]
 }

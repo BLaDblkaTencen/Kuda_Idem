@@ -144,7 +144,7 @@ apps/web/src/
 | GET | `/api/dictionaries` | все | Подписи для анкеты |
 | POST | `/api/trips` | организатор | Создать вылазку `{ startsAt }` |
 | GET | `/api/trips/:id` | все | Экран вылазки: участники, варианты, кто за что голосовал |
-| PUT | `/api/trips/:id/answer` | участник | Анкета `{ budget, moods, district, constraints }` |
+| PUT | `/api/trips/:id/answer` | участник | Анкета `{ budget, moods, districts, constraints }` (`districts: []` — любой район) |
 | POST | `/api/trips/:id/suggest` | организатор | Подобрать 3 места (повторно — «другие варианты») |
 | POST | `/api/trips/:id/vote` | участник | Голос `{ placeId }` |
 | POST | `/api/trips/:id/finish` | организатор | Завершить голосование (при ничьей — `{ placeId }`), разослать карточки |

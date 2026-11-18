@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isOpenAt, matchPlaces, type MatchAnswer, type MatchPlace } from './match.js';
+import { isOpenAt, matchPlaces, participantScore, type MatchAnswer, type MatchPlace } from './match.js';
 import { TEST_PLACES } from '../db/seed-places.js';
 
 const places: MatchPlace[] = TEST_PLACES.map((p, i) => ({
@@ -25,7 +25,7 @@ const answer = (over: Partial<MatchAnswer> = {}): MatchAnswer => ({
   userId: Math.floor(Math.random() * 1e9),
   budget: null,
   moods: [],
-  district: null,
+  districts: [],
   constraints: [],
   ...over,
 });
@@ -69,7 +69,7 @@ describe('matchPlaces', () => {
 
   it('летние места не предлагаются в ноябре, но предлагаются в июле', () => {
     const beach = byName('Пляж').id;
-    const answers = [answer({ budget: 0, moods: ['outdoor'], district: 'gagarinsky' })];
+    const answers = [answer({ budget: 0, moods: ['outdoor'], districts: ['gagarinsky'] })];
     const nov = matchPlaces({ places, answers, startsAt: FRIDAY_EVENING, count: 10 });
     const jul = matchPlaces({ places, answers, startsAt: JULY_EVENING, count: 10 });
     expect(nov.map((r) => r.placeId)).not.toContain(beach);
@@ -101,8 +101,8 @@ describe('matchPlaces', () => {
     const res = matchPlaces({
       places,
       answers: [
-        answer({ moods: ['play'], district: 'center' }),
-        answer({ moods: ['party'], district: 'center' }),
+        answer({ moods: ['play'], districts: ['center'] }),
+        answer({ moods: ['party'], districts: ['center'] }),
       ],
       startsAt: FRIDAY_EVENING,
       count: 10,
@@ -155,12 +155,23 @@ describe('matchPlaces', () => {
     const res = matchPlaces({
       places,
       answers: [
-        answer({ moods: ['eat'], district: 'korabelnaya' }),
-        answer({ moods: ['eat'], district: 'korabelnaya' }),
+        answer({ moods: ['eat'], districts: ['korabelnaya'] }),
+        answer({ moods: ['eat'], districts: ['korabelnaya'] }),
       ],
       startsAt: FRIDAY_EVENING,
     });
     const top = places.find((p) => p.id === res[0]!.placeId)!;
     expect(['korabelnaya', 'center']).toContain(top.district);
+  });
+
+  it('несколько районов: подходит место в любом из выбранных или рядом с ними', () => {
+    const balaklava = places.find((p) => p.district === 'balaklava')!;
+    const moods = { moods: [] as string[] };
+    // 1 балл за «настроение всё равно» + 1 за район, если подходит
+    expect(participantScore(balaklava, answer({ ...moods, districts: ['center'] }))).toBe(1);
+    expect(participantScore(balaklava, answer({ ...moods, districts: ['center', 'balaklava'] }))).toBe(2);
+    expect(participantScore(balaklava, answer({ ...moods, districts: [] }))).toBe(2); // любой район
+    const korabelnaya = places.find((p) => p.district === 'korabelnaya')!;
+    expect(participantScore(korabelnaya, answer({ ...moods, districts: ['balaklava', 'center'] }))).toBe(2); // сосед Центра
   });
 });

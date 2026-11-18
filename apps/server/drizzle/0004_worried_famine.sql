@@ -1,0 +1,1 @@
+ALTER TABLE "trip_answers" DROP COLUMN "district";

@@ -38,9 +38,9 @@ let trip = await call(masha, 'POST', '/api/trips', { startsAt: friday.toISOStrin
 console.log(`   id=${trip.id}, ${trip.startsAtLabel}`);
 
 step('3. Все отвечают на анкету');
-await call(masha, 'PUT', `/api/trips/${trip.id}/answer`, { budget: 1000, moods: ['eat', 'play'], district: 'center', constraints: [] });
-await call(petya, 'PUT', `/api/trips/${trip.id}/answer`, { budget: 500, moods: ['play'], district: 'korabelnaya', constraints: ['no_alcohol'] });
-trip = await call(dima, 'PUT', `/api/trips/${trip.id}/answer`, { budget: null, moods: [], district: null, constraints: ['under_18'] });
+await call(masha, 'PUT', `/api/trips/${trip.id}/answer`, { budget: 1000, moods: ['eat', 'play'], districts: ['center', 'ostryaki'], constraints: [] });
+await call(petya, 'PUT', `/api/trips/${trip.id}/answer`, { budget: 500, moods: ['play'], district: 'korabelnaya', constraints: ['no_alcohol'] } /* старый формат */);
+trip = await call(dima, 'PUT', `/api/trips/${trip.id}/answer`, { budget: null, moods: [], districts: [], constraints: ['under_18'] });
 console.log(`   ответили: ${trip.participants.map((p: any) => p.firstName).join(', ')}`);
 
 step('4–5. Маша запускает подбор');

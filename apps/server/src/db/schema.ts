@@ -82,7 +82,7 @@ export const tripAnswers = pgTable(
       .references(() => users.id),
     budget: integer('budget'), // null = не важно
     moods: text('moods').array().notNull().default([]),
-    district: text('district'), // null = любой
+    districts: text('districts').array().notNull().default([]), // пусто = любой район
     constraints: text('constraints').array().notNull().default([]),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

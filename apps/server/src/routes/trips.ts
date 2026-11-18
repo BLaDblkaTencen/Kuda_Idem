@@ -35,7 +35,9 @@ const answerBody = z.object({
     .refine((b) => (BUDGET_OPTIONS as readonly number[]).includes(b), 'Недопустимый бюджет')
     .nullable(),
   moods: z.array(z.enum(MOOD_KEYS as [Mood, ...Mood[]])).max(MOOD_KEYS.length),
-  district: z.enum(DISTRICT_KEYS as [District, ...District[]]).nullable(),
+  districts: z.array(z.enum(DISTRICT_KEYS as [District, ...District[]])).max(DISTRICT_KEYS.length).optional(),
+  // Старый формат (один район): его ещё может прислать приложение, открытое до обновления.
+  district: z.enum(DISTRICT_KEYS as [District, ...District[]]).nullable().optional(),
   constraints: z.array(z.enum(CONSTRAINT_KEYS as [Constraint, ...Constraint[]])).max(CONSTRAINT_KEYS.length),
 });
 
@@ -105,7 +107,7 @@ async function tripView(trip: Trip, userId: number) {
     organizer: organizer && person(organizer),
     participants: answers.map((a) => person(a.user)),
     myAnswer: mine
-      ? { budget: mine.budget, moods: mine.moods, district: mine.district, constraints: mine.constraints }
+      ? { budget: mine.budget, moods: mine.moods, districts: mine.districts, constraints: mine.constraints }
       : null,
     suggestions: suggestions.map((s) => {
       const voters = allVotes.filter((v) => v.placeId === s.place.id).map((v) => person(v.user));
@@ -156,12 +158,17 @@ tripRoutes.put('/:id/answer', async (c) => {
   if (trip.status !== 'collecting') {
     return fail(c, 409, 'closed', 'Подбор уже запущен — теперь можно только голосовать');
   }
-  const values = { ...body, updatedAt: new Date() };
+  const { district, districts, ...rest } = body;
+  const values = {
+    ...rest,
+    districts: [...new Set(districts ?? (district ? [district] : []))],
+    updatedAt: new Date(),
+  };
   await db
     .insert(tripAnswers)
     .values({ tripId: id, userId: user.id, ...values })
     .onConflictDoUpdate({ target: [tripAnswers.tripId, tripAnswers.userId], set: values });
-  await track('answer_submitted', { userId: user.id, tripId: id, props: body });
+  await track('answer_submitted', { userId: user.id, tripId: id, props: { ...rest, districts: values.districts } });
   return c.json(await tripView(trip, user.id));
 });
 
