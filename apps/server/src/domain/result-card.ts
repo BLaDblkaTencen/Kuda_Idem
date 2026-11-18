@@ -2,7 +2,7 @@ import type { Place } from '../db/schema.js';
 import { toCityTime } from '../matching/match.js';
 import { DISTRICTS, type District } from './constants.js';
 import { formatTripDate } from './format.js';
-import { placeTitleTo } from './place-name.js';
+import { placeGoTo } from './place-name.js';
 
 // Карточка итога вылазки, которую бот присылает каждому участнику в личный чат.
 // Текст в разметке HTML (parse_mode: 'HTML'), поэтому всё из базы экранируется.
@@ -40,7 +40,7 @@ export function resultCardText(opts: { place: Place; startsAt: Date; participant
   const hours = hoursOnTripDay(place.hours, startsAt);
 
   const lines = [
-    `🎉 <b>Идём в ${escape(placeTitleTo(place))}</b>`,
+    `🎉 <b>Идём ${escape(placeGoTo(place))}</b>`,
     '',
     `🗓 ${escape(formatTripDate(startsAt))}`,
     `📍 ${escape(place.address)} · ${escape(district)}`,

@@ -58,6 +58,8 @@ export const FEATURES = {
   dance_floor: 'танцпол',
   sea_view: 'вид на море',
   big_tables: 'большие столы',
+  // Еда не главное (парк, квест, музей): пожелания к меню — «вегетарианец», «не пью» — здесь не важны.
+  no_food: 'без еды',
 } as const;
 export type Feature = keyof typeof FEATURES;
 

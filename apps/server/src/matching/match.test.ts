@@ -167,11 +167,20 @@ describe('matchPlaces', () => {
   it('несколько районов: подходит место в любом из выбранных или рядом с ними', () => {
     const balaklava = places.find((p) => p.district === 'balaklava')!;
     const moods = { moods: [] as string[] };
-    // 1 балл за «настроение всё равно» + 1 за район, если подходит
-    expect(participantScore(balaklava, answer({ ...moods, districts: ['center'] }))).toBe(1);
-    expect(participantScore(balaklava, answer({ ...moods, districts: ['center', 'balaklava'] }))).toBe(2);
-    expect(participantScore(balaklava, answer({ ...moods, districts: [] }))).toBe(2); // любой район
+    // 2 балла за «настроение всё равно» + 1 за район, если подходит
+    expect(participantScore(balaklava, answer({ ...moods, districts: ['center'] }))).toBe(2);
+    expect(participantScore(balaklava, answer({ ...moods, districts: ['center', 'balaklava'] }))).toBe(3);
+    expect(participantScore(balaklava, answer({ ...moods, districts: [] }))).toBe(3); // любой район
     const korabelnaya = places.find((p) => p.district === 'korabelnaya')!;
-    expect(participantScore(korabelnaya, answer({ ...moods, districts: ['balaklava', 'center'] }))).toBe(2); // сосед Центра
+    expect(participantScore(korabelnaya, answer({ ...moods, districts: ['balaklava', 'center'] }))).toBe(3); // сосед Центра
+  });
+
+  it('места без еды подходят вегетарианцам и непьющим, но «мне нет 18» действует и там', () => {
+    const park: MatchPlace = { ...places[0]!, id: 999, features: ['no_food'], hours: null, season: 'all_year', maxGroupSize: 30 };
+    const veg = matchPlaces({ places: [park], answers: [answer({ constraints: ['vegetarian', 'no_alcohol'] })], startsAt: FRIDAY_EVENING });
+    expect(veg.map((r) => r.placeId)).toEqual([999]);
+    expect(veg[0]!.relaxed).toEqual([]);
+    const adults: MatchPlace = { ...park, features: ['no_food', 'adults_only'] };
+    expect(matchPlaces({ places: [adults], answers: [answer({ constraints: ['under_18'] })], startsAt: FRIDAY_EVENING })).toEqual([]);
   });
 });

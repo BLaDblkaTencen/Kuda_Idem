@@ -14,10 +14,14 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Название уже содержит вид («Кафе «Маяк»» у тестовых мест) — тогда вид не добавляем. */
 const hasKindInName = (p: Named) => !p.kind && p.name.includes('«');
+/** Вид — часть самого названия: «Парк Победы», «Приморский бульвар», «Набережная Балаклавы». */
+const nameContainsKind = (p: Named) => !!p.kind && p.name.toLowerCase().includes(p.kind.toLowerCase());
 
-/** «Кинотеатр «Победа»» — для заголовков. */
+/** «Кинотеатр «Победа»», «Парк Победы» — для заголовков. */
 export function placeTitle(p: Named): string {
-  return hasKindInName(p) ? p.name : `${capitalize(placeKind(p))} ${quote(p.name)}`;
+  if (hasKindInName(p)) return p.name;
+  if (nameContainsKind(p)) return capitalize(p.name);
+  return `${capitalize(placeKind(p))} ${quote(p.name)}`;
 }
 
 /**
@@ -33,11 +37,22 @@ export function toAccusative(phrase: string): string {
   });
 }
 
-/** «кинотеатр «Победа»», «пиццерию «Челентано»» — после «Идём в …». */
-export function placeTitleTo(p: Named): string {
+// Куда говорят «на», а не «в»: на бульвар, на набережную, на Малахов курган.
+const NA_KINDS = ['бульвар', 'набережная', 'площадь', 'пляж', 'курган', 'смотровая площадка'];
+
+/** «в кинотеатр «Победа»», «в пиццерию «Челентано»», «на Приморский бульвар», «на Набережную Балаклавы». */
+export function placeGoTo(p: Named): string {
+  const kind = placeKind(p);
+  const prep = NA_KINDS.some((k) => kind.toLowerCase().endsWith(k)) ? 'на' : 'в';
   if (hasKindInName(p)) {
     const i = p.name.indexOf('«');
-    return toAccusative(p.name.slice(0, i).toLowerCase()) + p.name.slice(i);
+    return `${prep} ${toAccusative(p.name.slice(0, i).toLowerCase())}${p.name.slice(i)}`;
   }
-  return `${toAccusative(placeKind(p))} ${quote(p.name)}`;
+  if (nameContainsKind(p)) {
+    // Склоняем только сам вид, если название с него начинается: «Набережная Балаклавы» → «Набережную Балаклавы».
+    const starts = p.name.toLowerCase().startsWith(kind.toLowerCase());
+    const name = starts ? toAccusative(p.name.slice(0, kind.length)) + p.name.slice(kind.length) : p.name;
+    return `${prep} ${name}`;
+  }
+  return `${prep} ${toAccusative(kind)} ${quote(p.name)}`;
 }

@@ -81,7 +81,7 @@ export function parsePlacesCsv(text: string, verifiedAt: string): NewPlace[] {
       throw new Error(`Строка ${line} («${name}»): ${(e as Error).message}`);
     }
 
-    const kind = get('вид').toLowerCase();
+    const kind = get('вид'); // как написано в таблице: «кинотеатр», «VR-арена»
     if (!kind) throw new Error(`Строка ${line} («${name}»): пустой «вид» — например «кинотеатр» или «пиццерия»`);
 
     const noOrder = get('можно_без_заказа').toLowerCase();

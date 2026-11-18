@@ -133,7 +133,8 @@ function violatesConstraints(place: MatchPlace, answers: MatchAnswer[], onlyStri
       const rule = CONSTRAINTS[c as Constraint] as { requires?: Feature; forbids?: Feature; strict?: boolean } | undefined;
       if (!rule) return false;
       if (onlyStrict && !rule.strict) return false;
-      if (rule.requires && !place.features.includes(rule.requires)) return true;
+      // Требования к меню не касаются мест без еды (парк, квест, музей).
+      if (rule.requires && !place.features.includes(rule.requires) && !place.features.includes('no_food')) return true;
       if (rule.forbids && place.features.includes(rule.forbids)) return true;
       return false;
     }),
@@ -151,7 +152,8 @@ function districtFits(answerDistricts: string[], placeDistrict: string): boolean
 export function participantScore(place: MatchPlace, answer: MatchAnswer): number {
   const moodScore = answer.moods.length === 0 ? 1 : answer.moods.filter((m) => place.moods.includes(m)).length;
   const districtScore = districtFits(answer.districts, place.district) ? 1 : 0;
-  return moodScore + districtScore;
+  // Настроение важнее района: «хочу поесть» в чужом районе лучше, чем парк по соседству.
+  return moodScore * 2 + districtScore;
 }
 
 function passesFilters(
