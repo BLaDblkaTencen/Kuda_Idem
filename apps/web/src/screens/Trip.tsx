@@ -226,22 +226,35 @@ function Voting({ trip, setTrip }: StepProps) {
       </div>
       {tieLeaders && <p className="muted">Выберите одно из лидирующих мест.</p>}
 
-      {trip.suggestions.map(({ place, voters }) => {
+      {trip.suggestions.map(({ place, tags, voters }) => {
         const mine = trip.myVote === place.id;
         const isLeaderInTie = tieLeaders?.includes(place.id);
         return (
           <article key={place.id} className={`card vote-card${mine ? ' accent' : ''}`}>
-            <div>
-              <div className="row between" style={{ alignItems: 'flex-start' }}>
-                <h3 className="place-name">{place.title}</h3>
-                <span className="price">{priceLabel(place.avgCheck)}</span>
+            <div className="vote-head">
+              <div className="place-icon" aria-hidden>
+                <span>{place.icon}</span>
               </div>
-              <span className="place-meta">
-                {place.districtLabel}
-                {place.isTestData && ' · тестовое место'}
-              </span>
+              <div className="vote-title">
+                <h3 className="place-name">{place.title}</h3>
+                <span className="place-meta">
+                  {place.districtLabel}
+                  {place.isTestData && ' · тестовое место'}
+                </span>
+              </div>
+              {/* У бесплатных мест цену заменяет метка «бесплатно». */}
+              {!place.isFree && <span className="price">{priceLabel(place.avgCheck)}</span>}
             </div>
             {place.description && <p className="vote-desc">{place.description}</p>}
+            {tags.length > 0 && (
+              <div className="place-tags">
+                {tags.map((t) => (
+                  <span key={t} className="place-tag">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="row between">
               <div className="voters">
                 {voters.length > 0 && (

@@ -6,6 +6,7 @@ export interface PlaceCard {
   /** «Кинотеатр «Победа»» — вид заведения и название */
   title: string;
   kind: string;
+  icon: string;
   type: string;
   typeLabel: string;
   district: string;
@@ -45,7 +46,7 @@ export interface Trip {
   organizer: Person | undefined;
   participants: Person[];
   myAnswer: Answer | null;
-  suggestions: Array<{ place: PlaceCard; explanation: string; votes: number; voters: Person[] }>;
+  suggestions: Array<{ place: PlaceCard; tags: string[]; explanation: string; votes: number; voters: Person[] }>;
   myVote: number | null;
   chosenPlace: PlaceCard | null;
   link: string | null;

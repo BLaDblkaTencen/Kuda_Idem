@@ -5,6 +5,7 @@ import { places, type Place } from '../db/schema.js';
 import { DISTRICTS, FEATURES, PLACE_TYPES, type District, type Feature, type PlaceType } from '../domain/constants.js';
 import { yandexMapsLink } from '../domain/format.js';
 import { placeKind, placeTitle } from '../domain/place-name.js';
+import { placeIcon } from '../domain/place-badges.js';
 
 /** Карточка места для интерфейса: всё уже с русскими подписями. */
 export function placeCard(p: Place) {
@@ -13,6 +14,7 @@ export function placeCard(p: Place) {
     name: p.name,
     title: placeTitle(p), // «Кинотеатр «Победа»»
     kind: placeKind(p),
+    icon: placeIcon(p), // 🎬, 🌳, 💨 — значок вида места
     type: p.type,
     typeLabel: PLACE_TYPES[p.type as PlaceType] ?? p.type,
     district: p.district,

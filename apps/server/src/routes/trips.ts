@@ -23,6 +23,7 @@ import { config } from '../config.js';
 import { resultCardText, websiteUrl } from '../domain/result-card.js';
 import { placeGoTo } from '../domain/place-name.js';
 import { placeCard } from './places.js';
+import { placeTags } from '../domain/place-badges.js';
 
 const MAX_DAYS_AHEAD = 30;
 
@@ -111,7 +112,13 @@ async function tripView(trip: Trip, userId: number) {
       : null,
     suggestions: suggestions.map((s) => {
       const voters = allVotes.filter((v) => v.placeId === s.place.id).map((v) => person(v.user));
-      return { place: placeCard(s.place), explanation: s.suggestion.explanation, votes: voters.length, voters };
+      return {
+        place: placeCard(s.place),
+        tags: placeTags(s.place, trip.startsAt), // «бесплатно», «18+», «🕑 до 23:00»…
+        explanation: s.suggestion.explanation,
+        votes: voters.length,
+        voters,
+      };
     }),
     myVote: allVotes.find((v) => v.user.id === userId)?.placeId ?? null,
     chosenPlace: chosen ? placeCard(chosen) : null,

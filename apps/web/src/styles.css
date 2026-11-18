@@ -219,6 +219,30 @@ h1, h2, h3, p { margin: 0; }
 /* голосование: карточка без лишнего — голоса, карта и кнопка одной строкой */
 .vote-card { gap: 8px; }
 .vote-desc { font-size: 14px; }
+/* Значок и метки — только цвета темы: значок и эмодзи в метках серые, фон — голубой акцент. */
+.vote-head { display: flex; align-items: center; gap: 12px; }
+.vote-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.place-icon {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+}
+.place-icon span { filter: grayscale(1); opacity: 0.75; }
+.place-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.place-tag {
+  font-size: 13px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--hint);
+  white-space: nowrap;
+  filter: grayscale(1);
+}
 .voters { display: flex; align-items: center; gap: 6px; }
 .avatar-stack { display: flex; }
 .avatar-stack .avatar { width: 24px; height: 24px; font-size: 11px; border: 2px solid var(--card); margin-left: -7px; }
