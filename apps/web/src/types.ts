@@ -5,10 +5,13 @@ export interface PlaceCard {
   name: string;
   /** «Кинотеатр «Победа»» — вид заведения и название */
   title: string;
+  /** «в кинотеатр «Победа»», «на Приморский бульвар» — после «Идём» */
+  goTo: string;
   kind: string;
   icon: string;
+  /** Метки на день встречи: «бесплатно», «18+», «🕑 до 23:00»… */
+  tags: string[];
   type: string;
-  typeLabel: string;
   district: string;
   districtLabel: string;
   address: string;
@@ -46,7 +49,7 @@ export interface Trip {
   organizer: Person | undefined;
   participants: Person[];
   myAnswer: Answer | null;
-  suggestions: Array<{ place: PlaceCard; tags: string[]; explanation: string; votes: number; voters: Person[] }>;
+  suggestions: Array<{ place: PlaceCard; voters: Person[] }>;
   myVote: number | null;
   chosenPlace: PlaceCard | null;
   link: string | null;

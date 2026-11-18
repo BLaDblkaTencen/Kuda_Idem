@@ -45,7 +45,7 @@ console.log(`   ответили: ${trip.participants.map((p: any) => p.firstNam
 
 step('4–5. Маша запускает подбор');
 trip = await call(masha, 'POST', `/api/trips/${trip.id}/suggest`);
-for (const s of trip.suggestions) console.log(`   • ${s.place.title} — ${s.explanation}`);
+for (const s of trip.suggestions) console.log(`   ${s.place.icon} ${s.place.title} — ${s.place.tags.join(' · ')}`);
 
 step('5. «Другие варианты» двойным нажатием — оба запроса без ошибки');
 const [r1, r2] = await Promise.all([
@@ -54,14 +54,14 @@ const [r1, r2] = await Promise.all([
 ]);
 trip = r2.round >= r1.round ? r2 : r1;
 console.log(`   раунды ответов: ${r1.round} и ${r2.round}`);
-for (const s of trip.suggestions) console.log(`   • ${s.place.title} — ${s.explanation}`);
+for (const s of trip.suggestions) console.log(`   ${s.place.icon} ${s.place.title} — ${s.place.tags.join(' · ')}`);
 
 step('6. Голосование');
 const [a, b = a] = trip.suggestions.map((s: any) => s.place.id); // в последнем раунде может остаться одно место
 await call(masha, 'POST', `/api/trips/${trip.id}/vote`, { placeId: a });
 await call(petya, 'POST', `/api/trips/${trip.id}/vote`, { placeId: a });
 trip = await call(dima, 'POST', `/api/trips/${trip.id}/vote`, { placeId: b });
-for (const s of trip.suggestions) console.log(`   ${s.votes} гол. — ${s.place.title}`);
+for (const s of trip.suggestions) console.log(`   ${s.voters.length} гол. — ${s.place.title}`);
 
 step('Проверка прав: Петя не может завершить голосование');
 const refused = await call(petya, 'POST', `/api/trips/${trip.id}/finish`).then(
@@ -78,7 +78,7 @@ const [f1, f2] = await Promise.all([
 ]);
 if (f1.chosenPlace?.id !== f2.chosenPlace?.id) throw new Error('двойное завершение дало разные итоги');
 trip = f1;
-console.log(`   Идём: ${trip.chosenPlace.title}, ${trip.startsAtLabel}`);
+console.log(`   Идём ${trip.chosenPlace.goTo}, ${trip.startsAtLabel}`);
 console.log(`   Маршрут: ${trip.chosenPlace.mapsUrl}`);
 
 console.log('\nСценарий пройден целиком.');

@@ -226,7 +226,7 @@ function Voting({ trip, setTrip }: StepProps) {
       </div>
       {tieLeaders && <p className="muted">Выберите одно из лидирующих мест.</p>}
 
-      {trip.suggestions.map(({ place, tags, voters }) => {
+      {trip.suggestions.map(({ place, voters }) => {
         const mine = trip.myVote === place.id;
         const isLeaderInTie = tieLeaders?.includes(place.id);
         return (
@@ -246,15 +246,7 @@ function Voting({ trip, setTrip }: StepProps) {
               {!place.isFree && <span className="price">{priceLabel(place.avgCheck)}</span>}
             </div>
             {place.description && <p className="vote-desc">{place.description}</p>}
-            {tags.length > 0 && (
-              <div className="place-tags">
-                {tags.map((t) => (
-                  <span key={t} className="place-tag">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            )}
+            <PlaceTags tags={place.tags} />
             <div className="row between">
               <div className="voters">
                 {voters.length > 0 && (
@@ -336,13 +328,23 @@ function Decided({ trip }: { trip: TripData }) {
         <div className="hero-emoji" aria-hidden>
           🎉
         </div>
-        <p className="muted">Идём в</p>
-        <h2 className="result-title">{place.title}</h2>
-        <p className="place-meta">
-          {place.districtLabel} · {priceLabel(place.avgCheck)}
-        </p>
-        <p>{place.address}</p>
+        {/* Та же фраза, что в карточке от бота: «Идём на Приморский бульвар», «Идём в кинотеатр «Победа»». */}
+        <h2 className="result-title">Идём {place.goTo}</h2>
+        <div className="vote-head">
+          <div className="place-icon" aria-hidden>
+            <span>{place.icon}</span>
+          </div>
+          <div className="vote-title">
+            {/* У парков и бульваров адрес совпадает с названием — тогда не повторяем его. */}
+            {place.address.toLowerCase() !== place.name.toLowerCase() && <span>{place.address}</span>}
+            <span className="place-meta">
+              {place.districtLabel}
+              {!place.isFree && ` · ${priceLabel(place.avgCheck)}`}
+            </span>
+          </div>
+        </div>
         {place.description && <p className="muted">{place.description}</p>}
+        <PlaceTags tags={place.tags} />
       </div>
       <p className="muted center">Карточка с деталями встречи пришла каждому в чат с ботом</p>
 
@@ -362,5 +364,19 @@ function Decided({ trip }: { trip: TripData }) {
         </button>
       </BottomBar>
     </>
+  );
+}
+
+/** Метки места: «бесплатно», «18+», особенности, часы в день встречи. Серые, в цветах темы. */
+function PlaceTags({ tags }: { tags: string[] }) {
+  if (tags.length === 0) return null;
+  return (
+    <div className="place-tags">
+      {tags.map((t) => (
+        <span key={t} className="place-tag">
+          {t}
+        </span>
+      ))}
+    </div>
   );
 }
