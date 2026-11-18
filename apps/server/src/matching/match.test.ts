@@ -50,10 +50,10 @@ describe('isOpenAt', () => {
 });
 
 describe('matchPlaces', () => {
-  it('возвращает 3 места без повторов', () => {
+  it('возвращает 5 мест без повторов', () => {
     const res = matchPlaces({ places, answers: [answer(), answer()], startsAt: FRIDAY_EVENING });
-    expect(res).toHaveLength(3);
-    expect(new Set(res.map((r) => r.placeId)).size).toBe(3);
+    expect(res).toHaveLength(5);
+    expect(new Set(res.map((r) => r.placeId)).size).toBe(5);
   });
 
   it('при бюджете 0 ₽ предлагает только бесплатные места', () => {
@@ -88,10 +88,10 @@ describe('matchPlaces', () => {
     }
   });
 
-  it('не больше двух мест одного типа', () => {
+  it('не больше трёх мест одного типа', () => {
     const res = matchPlaces({ places, answers: [answer({ moods: ['eat'] })], startsAt: FRIDAY_EVENING });
     const types = res.map((r) => places.find((p) => p.id === r.placeId)!.type);
-    for (const t of new Set(types)) expect(types.filter((x) => x === t).length).toBeLessThanOrEqual(2);
+    for (const t of new Set(types)) expect(types.filter((x) => x === t).length).toBeLessThanOrEqual(3);
   });
 
   it('опускает вниз место, которое совсем не подходит одному из участников', () => {

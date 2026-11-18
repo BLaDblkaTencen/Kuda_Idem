@@ -58,7 +58,9 @@ const CITY_UTC_OFFSET_MIN = 3 * 60;
 const MIN_OPEN_AHEAD_MIN = 60;
 // Насколько можно превысить самый маленький бюджет (со штрафом).
 const BUDGET_TOLERANCE = 1.2;
-const MAX_SAME_TYPE = 2;
+// Сколько мест предлагать за раз и сколько из них может быть одного типа (чтобы не пять кафе).
+const DEFAULT_COUNT = 5;
+const MAX_SAME_TYPE = 3;
 
 type RelaxableFilter = 'budget' | 'group_size' | 'constraints';
 // Порядок, в котором ослабляем условия, если подходящих мест нет.
@@ -200,7 +202,7 @@ function explain(place: MatchPlace, answers: MatchAnswer[], relaxed: RelaxableFi
 
 export function matchPlaces(input: MatchInput): MatchResult[] {
   const { places, answers, startsAt } = input;
-  const count = input.count ?? 3;
+  const count = input.count ?? DEFAULT_COUNT;
   const exclude = new Set(input.excludePlaceIds ?? []);
   const pool = places.filter((p) => !exclude.has(p.id));
   const cap = groupBudgetCap(answers);
@@ -231,7 +233,7 @@ export function matchPlaces(input: MatchInput): MatchResult[] {
       a.place.id - b.place.id,
   );
 
-  // Разнообразие: не больше двух мест одного типа в выдаче.
+  // Разнообразие: не больше MAX_SAME_TYPE мест одного типа в выдаче.
   const picked: typeof scored = [];
   const perType = new Map<string, number>();
   for (const s of scored) {
