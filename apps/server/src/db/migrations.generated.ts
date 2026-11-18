@@ -49,5 +49,11 @@ export const MIGRATIONS: ReadonlyArray<{ tag: string; statements: readonly strin
     "statements": [
       "ALTER TABLE \"trip_answers\" DROP COLUMN \"district\";"
     ]
+  },
+  {
+    "tag": "0005_cool_tyrannus",
+    "statements": [
+      "ALTER TABLE \"users\" ADD COLUMN \"last_prompt_message_id\" integer;"
+    ]
   }
 ];

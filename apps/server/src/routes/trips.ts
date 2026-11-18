@@ -331,6 +331,7 @@ async function sendResultCards(trip: Trip): Promise<void> {
   if (config.WEB_APP_URL.startsWith('https://')) {
     messages.push({
       html: 'Хорошо вам провести время! 🙌\nКогда захочется снова куда-нибудь выбраться — соберите новую вылазку.',
+      prompt: true, // в чате остаётся только последнее такое сообщение
       buttons: [{ text: 'Собрать новую вылазку', webApp: config.WEB_APP_URL }],
     });
   }

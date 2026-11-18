@@ -54,6 +54,9 @@ export const users = pgTable('users', {
   lastName: text('last_name'),
   username: text('username'),
   photoUrl: text('photo_url'),
+  // Последнее сообщение бота с кнопкой «Собрать вылазку» в личном чате: при отправке нового
+  // старое удаляется, чтобы такие сообщения не копились.
+  lastPromptMessageId: integer('last_prompt_message_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

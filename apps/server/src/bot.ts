@@ -1,8 +1,11 @@
 import { createHmac } from 'node:crypto';
-import { Bot, GrammyError, InlineKeyboard, webhookCallback } from 'grammy';
+import { eq } from 'drizzle-orm';
+import { Bot, GrammyError, InlineKeyboard, webhookCallback, type Api } from 'grammy';
 import type { InlineQueryResultArticle } from 'grammy/types';
 import { config } from './config.js';
 import { HELP_TEXT, syncBotProfile } from './bot-profile.js';
+import { db } from './db/client.js';
+import { users } from './db/schema.js';
 
 // Бот работает в одном из двух режимов (BOT_MODE):
 //   polling — процесс сам опрашивает Telegram. Для разработки на компьютере (npm run dev / telegram).
@@ -46,16 +49,48 @@ function registerHandlers(bot: Bot): void {
     // /start <id вылазки> — открыть сразу нужную вылазку.
     const tripId = /^[\w-]{1,32}$/.test(ctx.match) ? ctx.match : '';
     const url = tripId ? `${config.WEB_APP_URL}#/trip/${tripId}` : config.WEB_APP_URL;
-    await ctx.reply(
-      tripId ? 'Вас позвали на вылазку — ответьте на 4 вопроса.' : 'Соберите друзей и за пару минут выберите, куда пойти.',
-      { reply_markup: new InlineKeyboard().webApp(tripId ? 'Открыть вылазку' : 'Собрать вылазку', url) },
-    );
+    const send = () =>
+      ctx.reply(
+        tripId ? 'Вас позвали на вылазку — ответьте на 4 вопроса.' : 'Соберите друзей и за пару минут выберите, куда пойти.',
+        { reply_markup: new InlineKeyboard().webApp(tripId ? 'Открыть вылазку' : 'Собрать вылазку', url) },
+      );
+    if (ctx.chat.type === 'private' && ctx.from) await sendPrompt(ctx.api, { id: ctx.from.id, firstName: ctx.from.first_name }, send);
+    else await send();
   });
   bot.command('help', async (ctx) => {
     const keyboard = config.WEB_APP_URL ? new InlineKeyboard().webApp('Собрать вылазку', config.WEB_APP_URL) : undefined;
-    await ctx.reply(HELP_TEXT, { reply_markup: keyboard });
+    const send = () => ctx.reply(HELP_TEXT, { reply_markup: keyboard });
+    if (keyboard && ctx.chat.type === 'private' && ctx.from) {
+      await sendPrompt(ctx.api, { id: ctx.from.id, firstName: ctx.from.first_name }, send);
+    } else await send();
   });
   bot.catch((err) => console.error('Ошибка бота:', err.error));
+}
+
+/**
+ * Сообщение с кнопкой «Собрать вылазку» в личном чате: в чате остаётся только последнее такое.
+ * Сначала отправляем новое (чтобы кнопка не пропадала), потом удаляем предыдущее.
+ * Telegram даёт боту удалять свои сообщения только в первые 48 часов — более старые остаются.
+ */
+export async function sendPrompt(
+  api: Api,
+  user: { id: number; firstName?: string },
+  send: () => Promise<{ message_id: number }>,
+): Promise<void> {
+  const [row] = await db.select({ last: users.lastPromptMessageId }).from(users).where(eq(users.id, user.id));
+  const sent = await send();
+  if (user.firstName) {
+    // /start может прислать тот, кто ещё не открывал приложение, — тогда его ещё нет в базе.
+    await db
+      .insert(users)
+      .values({ id: user.id, firstName: user.firstName, lastPromptMessageId: sent.message_id })
+      .onConflictDoUpdate({ target: users.id, set: { lastPromptMessageId: sent.message_id } });
+  } else {
+    await db.update(users).set({ lastPromptMessageId: sent.message_id }).where(eq(users.id, user.id));
+  }
+  if (row?.last && row.last !== sent.message_id) {
+    await api.deleteMessage(user.id, row.last).catch(() => {}); // старше 48 часов или уже удалено вручную
+  }
 }
 
 /** Имя, описания и команды бота — по текстам из bot-profile.ts. Ошибка не ломает запуск. */
@@ -186,6 +221,8 @@ export async function stopBot(): Promise<void> {
  */
 export type BotMessage = {
   html: string;
+  // true — сообщение с кнопкой «Собрать вылазку»: предыдущее такое удаляется (см. sendPrompt).
+  prompt?: boolean;
   // url — обычная ссылка; webApp — открыть Mini App (работает только в личном чате с ботом).
   buttons: Array<{ text: string; url: string } | { text: string; webApp: string }>;
 };
@@ -197,16 +234,19 @@ export async function sendToUsers(userIds: number[], messages: BotMessage[]): Pr
   const prepared = messages.map((m) => {
     const keyboard = new InlineKeyboard();
     for (const b of m.buttons) ('url' in b ? keyboard.url(b.text, b.url) : keyboard.webApp(b.text, b.webApp)).row();
-    return { html: m.html, keyboard };
+    return { html: m.html, keyboard, prompt: m.prompt };
   });
   const results = await Promise.allSettled(
     userIds.map(async (id) => {
       for (const m of prepared) {
-        await bot.api.sendMessage(id, m.html, {
-          parse_mode: 'HTML',
-          link_preview_options: { is_disabled: true },
-          reply_markup: m.keyboard,
-        });
+        const send = () =>
+          bot.api.sendMessage(id, m.html, {
+            parse_mode: 'HTML',
+            link_preview_options: { is_disabled: true },
+            reply_markup: m.keyboard,
+          });
+        if (m.prompt) await sendPrompt(bot.api, { id }, send);
+        else await send();
       }
     }),
   );
