@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 import { Bot, GrammyError, InlineKeyboard, webhookCallback } from 'grammy';
 import type { InlineQueryResultArticle } from 'grammy/types';
 import { config } from './config.js';
+import { HELP_TEXT, syncBotProfile } from './bot-profile.js';
 
 // Бот работает в одном из двух режимов (BOT_MODE):
 //   polling — процесс сам опрашивает Telegram. Для разработки на компьютере (npm run dev / telegram).
@@ -50,7 +51,21 @@ function registerHandlers(bot: Bot): void {
       { reply_markup: new InlineKeyboard().webApp(tripId ? 'Открыть вылазку' : 'Собрать вылазку', url) },
     );
   });
+  bot.command('help', async (ctx) => {
+    const keyboard = config.WEB_APP_URL ? new InlineKeyboard().webApp('Собрать вылазку', config.WEB_APP_URL) : undefined;
+    await ctx.reply(HELP_TEXT, { reply_markup: keyboard });
+  });
   bot.catch((err) => console.error('Ошибка бота:', err.error));
+}
+
+/** Имя, описания и команды бота — по текстам из bot-profile.ts. Ошибка не ломает запуск. */
+async function applyProfile(bot: Bot): Promise<void> {
+  try {
+    const changed = await syncBotProfile(bot.api);
+    if (changed.length) console.log(`Профиль бота обновлён: ${changed.join(', ')}`);
+  } catch (err) {
+    console.error('Не удалось обновить профиль бота:', err);
+  }
 }
 
 /** Кнопка «Куда идём?» слева от поля ввода в чате с ботом — на текущий адрес приложения. */
@@ -102,6 +117,7 @@ export function ensureWebhook(origin: string): Promise<void> {
       await updateMenuButton(bot);
       console.log(`Вебхук бота подключён: ${url}`);
     }
+    await applyProfile(bot);
   })().catch((err) => {
     webhookChecked = null;
     throw err;
@@ -133,6 +149,7 @@ export async function startPolling(): Promise<void> {
   }
 
   await updateMenuButton(bot);
+  await applyProfile(bot);
   pollWithRestarts(bot);
   console.log(`Бот @${bot.botInfo.username} запущен (опрос)`);
 }
