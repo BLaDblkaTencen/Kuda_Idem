@@ -26,6 +26,8 @@ import { placeCard } from './places.js';
 import { placeTags } from '../domain/place-badges.js';
 
 const MAX_DAYS_AHEAD = 30;
+// Насколько время встречи может быть в прошлом — запас на неточные часы телефона.
+const PAST_TOLERANCE_MS = 5 * 60_000;
 
 const createTripBody = z.object({ startsAt: z.iso.datetime({ offset: true }) });
 
@@ -136,7 +138,7 @@ tripRoutes.post('/', async (c) => {
   if (!body) return fail(c, 400, 'bad_request', 'Укажите дату и время встречи');
   const startsAt = new Date(body.startsAt);
   const now = Date.now();
-  if (startsAt.getTime() < now - 60 * 60_000 || startsAt.getTime() > now + MAX_DAYS_AHEAD * 86_400_000) {
+  if (startsAt.getTime() < now - PAST_TOLERANCE_MS || startsAt.getTime() > now + MAX_DAYS_AHEAD * 86_400_000) {
     return fail(c, 400, 'bad_date', `Дата должна быть в ближайшие ${MAX_DAYS_AHEAD} дней`);
   }
   const [trip] = await db.insert(trips).values({ id: nanoid(10), organizerId: user.id, startsAt }).returning();
