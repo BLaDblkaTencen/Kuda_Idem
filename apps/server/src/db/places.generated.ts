@@ -2603,3 +2603,6 @@ export const PLACES: NewPlace[] = [
     "isActive": true
   }
 ];
+
+// Отпечаток таблицы: сервер синхронизирует места с базой, только когда он изменился.
+export const PLACES_VERSION = '8e6384f8bf567b16';

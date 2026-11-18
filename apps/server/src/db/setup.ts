@@ -1,7 +1,7 @@
 import { and, count, eq, getTableColumns, isNotNull, notInArray, sql } from 'drizzle-orm';
 import { db } from './client.js';
-import { places } from './schema.js';
-import { PLACES } from './places.generated.js';
+import { appState, places } from './schema.js';
+import { PLACES, PLACES_VERSION } from './places.generated.js';
 import { TEST_PLACES } from './seed-places.js';
 
 /**
@@ -38,11 +38,39 @@ export async function syncPlaces({ keepTestPlaces }: { keepTestPlaces: boolean }
   return PLACES.length;
 }
 
+/**
+ * То же, что syncPlaces, но только если таблица мест (или режим тестовых мест) изменилась с прошлого раза.
+ * Обычный запуск Worker'а делает один короткий запрос вместо записи всех мест — меньше времени процессора.
+ * Возвращает число мест или null, если синхронизация не понадобилась.
+ * Чтобы пересинхронизировать принудительно, удалите строку places_version из таблицы app_state.
+ */
+export async function syncPlacesIfChanged(opts: { keepTestPlaces: boolean }): Promise<number | null> {
+  const key = 'places_version';
+  const want = `${PLACES_VERSION}:${opts.keepTestPlaces ? 'with-test' : 'real-only'}`;
+  if ((await getAppState(key)) === want) return null;
+  const n = await syncPlaces(opts);
+  await setAppState(key, want);
+  return n;
+}
+
+export async function getAppState(key: string): Promise<string | null> {
+  const [row] = await db.select({ value: appState.value }).from(appState).where(eq(appState.key, key));
+  return row?.value ?? null;
+}
+
+export async function setAppState(key: string, value: string): Promise<void> {
+  await db
+    .insert(appState)
+    .values({ key, value })
+    .onConflictDoUpdate({ target: appState.key, set: { value, updatedAt: new Date() } });
+}
+
 /** Загружает тестовые места, если их ещё нет в базе (для разработки). Возвращает число добавленных. */
 export async function seedTestPlacesIfMissing(): Promise<number> {
   const [row] = await db.select({ n: count() }).from(places).where(eq(places.isTestData, true));
   if ((row?.n ?? 0) > 0) return 0;
   await db.insert(places).values(TEST_PLACES.map((p) => ({ ...p, isTestData: true })));
+  await db.delete(appState).where(eq(appState.key, 'places_version')); // новые строки — пусть синхронизация пройдёт
   return TEST_PLACES.length;
 }
 

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { Api } from 'grammy';
 
 // Как бот выглядит в Telegram: имя, описания и меню команд. Бот сам приводит себя к этим текстам
@@ -27,6 +28,12 @@ export const BOT_COMMANDS = [
   { command: 'start', description: 'Собрать вылазку' },
   { command: 'help', description: 'Как это работает' },
 ];
+
+/** Отпечаток текстов профиля: если не менялся с прошлого запуска, Telegram можно не спрашивать. */
+export const PROFILE_VERSION = createHash('sha256')
+  .update(JSON.stringify([BOT_NAME, BOT_SHORT_DESCRIPTION, BOT_DESCRIPTION, BOT_COMMANDS]))
+  .digest('hex')
+  .slice(0, 16);
 
 /**
  * Обновляет только то, что отличается: Telegram строго ограничивает частоту смены имени,

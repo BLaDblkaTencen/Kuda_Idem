@@ -137,6 +137,14 @@ export const events = pgTable(
   (t) => [index('events_name_created_idx').on(t.name, t.createdAt)],
 );
 
+// Служебные отметки сервера: какую версию таблицы мест и профиля бота уже применили.
+// Позволяет не повторять эту работу при каждом запуске Worker'а.
+export const appState = pgTable('app_state', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type Place = typeof places.$inferSelect;
 export type NewPlace = typeof places.$inferInsert;
 export type Trip = typeof trips.$inferSelect;

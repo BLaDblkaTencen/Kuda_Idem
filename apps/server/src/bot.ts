@@ -3,7 +3,8 @@ import { eq } from 'drizzle-orm';
 import { Bot, GrammyError, InlineKeyboard, webhookCallback, type Api } from 'grammy';
 import type { InlineQueryResultArticle } from 'grammy/types';
 import { config } from './config.js';
-import { HELP_TEXT, syncBotProfile } from './bot-profile.js';
+import { HELP_TEXT, PROFILE_VERSION, syncBotProfile } from './bot-profile.js';
+import { getAppState, setAppState } from './db/setup.js';
 import { db } from './db/client.js';
 import { users } from './db/schema.js';
 
@@ -96,8 +97,12 @@ export async function sendPrompt(
 /** Имя, описания и команды бота — по текстам из bot-profile.ts. Ошибка не ломает запуск. */
 async function applyProfile(bot: Bot): Promise<void> {
   try {
+    // Тексты не менялись с прошлого раза для этого бота — 4 запроса к Telegram не нужны.
+    const key = `bot_profile:${bot.botInfo.id}`;
+    if ((await getAppState(key)) === PROFILE_VERSION) return;
     const changed = await syncBotProfile(bot.api);
     if (changed.length) console.log(`Профиль бота обновлён: ${changed.join(', ')}`);
+    await setAppState(key, PROFILE_VERSION);
   } catch (err) {
     console.error('Не удалось обновить профиль бота:', err);
   }

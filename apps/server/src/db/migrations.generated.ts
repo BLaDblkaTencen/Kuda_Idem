@@ -62,5 +62,11 @@ export const MIGRATIONS: ReadonlyArray<{ tag: string; statements: readonly strin
       "ALTER TABLE \"places\" DROP COLUMN \"vibes\";",
       "ALTER TABLE \"places\" DROP COLUMN \"no_order_ok\";"
     ]
+  },
+  {
+    "tag": "0007_bent_masque",
+    "statements": [
+      "CREATE TABLE \"app_state\" (\n\t\"key\" text PRIMARY KEY NOT NULL,\n\t\"value\" text NOT NULL,\n\t\"updated_at\" timestamp with time zone DEFAULT now() NOT NULL\n);"
+    ]
   }
 ];

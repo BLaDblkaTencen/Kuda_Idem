@@ -9,7 +9,7 @@ import { createApp } from './app.js';
 import { startPolling, stopBot } from './bot.js';
 import { closeDb } from './db/client.js';
 import { connectNodeDb, repoRoot, runNodeMigrations } from './db/node.js';
-import { seedTestPlacesIfMissing, syncPlaces } from './db/setup.js';
+import { seedTestPlacesIfMissing, syncPlacesIfChanged } from './db/setup.js';
 
 await connectNodeDb();
 // Таблицы создаются и обновляются сами при каждом запуске.
@@ -19,7 +19,8 @@ if (config.SEED_TEST_PLACES) {
   const added = await seedTestPlacesIfMissing();
   if (added) console.log(`Загружено тестовых мест: ${added}`);
 }
-console.log(`Мест из таблицы: ${await syncPlaces({ keepTestPlaces: config.SEED_TEST_PLACES })}`);
+const synced = await syncPlacesIfChanged({ keepTestPlaces: config.SEED_TEST_PLACES });
+console.log(synced === null ? 'Места в базе уже совпадают с таблицей' : `Мест из таблицы: ${synced}`);
 
 const app = createApp();
 

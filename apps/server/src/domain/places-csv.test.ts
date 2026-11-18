@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { parseCsv, parsePlacesCsv } from './places-csv.js';
-import { PLACES } from '../db/places.generated.js';
+import { createHash } from 'node:crypto';
+import { PLACES, PLACES_VERSION } from '../db/places.generated.js';
 
 const csvPath = fileURLToPath(new URL('../../../../data/places-sevastopol.csv', import.meta.url));
 
@@ -11,6 +12,11 @@ describe('таблица мест', () => {
     const fromCsv = parsePlacesCsv(readFileSync(csvPath, 'utf8'), 'any');
     const strip = (p: object) => ({ ...p, verifiedAt: undefined });
     expect(PLACES.map(strip), 'таблица изменилась — запустите npm run places:build').toEqual(fromCsv.map(strip));
+  });
+
+  it('отпечаток таблицы соответствует местам (иначе сервер не заметит изменений)', () => {
+    const version = createHash('sha256').update(JSON.stringify(PLACES)).digest('hex').slice(0, 16);
+    expect(PLACES_VERSION, 'запустите npm run places:build').toBe(version);
   });
 
   it('у каждого места есть часы и координаты в пределах Севастополя', () => {

@@ -50,6 +50,13 @@
       "when": 1795013589019,
       "tag": "0006_clammy_pandemic",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795024718943,
+      "tag": "0007_bent_masque",
+      "breakpoints": true
     }
   ]
 }
