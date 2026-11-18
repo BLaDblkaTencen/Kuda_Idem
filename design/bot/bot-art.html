@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Оформление бота</title>
+<style>
+  body { margin: 0; font-family: 'Segoe UI', -apple-system, Roboto, Arial, sans-serif; }
+  .art { position: relative; overflow: hidden; }
+  .avatar { width: 512px; height: 512px; }
+  .cover { width: 640px; height: 360px; }
+</style>
+</head>
+<body>
+
+<!-- A: метка с вопросом -->
+<div class="art avatar" id="avatar-a">
+  <svg width="512" height="512" viewBox="0 0 512 512">
+    <defs><linearGradient id="ga" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a9be6"/><stop offset="1" stop-color="#1f6fb8"/></linearGradient></defs>
+    <rect width="512" height="512" fill="url(#ga)"/>
+    <path d="M256 92c-72 0-128 55-128 125 0 92 128 205 128 205s128-113 128-205c0-70-56-125-128-125z" fill="#fff"/>
+    <text x="256" y="268" text-anchor="middle" font-size="150" font-weight="800" fill="#2481cc" font-family="Segoe UI, Arial">?</text>
+  </svg>
+</div>
+
+<!-- B: компания сходится в одну точку -->
+<div class="art avatar" id="avatar-b">
+  <svg width="512" height="512" viewBox="0 0 512 512">
+    <rect width="512" height="512" fill="#2481cc"/>
+    <g fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-dasharray="2 30" opacity=".85">
+      <path d="M120 150 Q190 230 256 290"/>
+      <path d="M392 150 Q322 230 256 290"/>
+      <path d="M256 120 L256 270"/>
+    </g>
+    <circle cx="120" cy="140" r="34" fill="#ffd36e"/>
+    <circle cx="392" cy="140" r="34" fill="#8fe0a8"/>
+    <circle cx="256" cy="108" r="34" fill="#ff9f8f"/>
+    <path d="M256 250c-34 0-60 26-60 58 0 44 60 98 60 98s60-54 60-98c0-32-26-58-60-58z" fill="#fff"/>
+    <circle cx="256" cy="308" r="20" fill="#2481cc"/>
+  </svg>
+</div>
+
+<!-- C: пузырь чата с названием -->
+<div class="art avatar" id="avatar-c">
+  <svg width="512" height="512" viewBox="0 0 512 512">
+    <defs><linearGradient id="gc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f8fdc"/><stop offset="1" stop-color="#1c64a8"/></linearGradient></defs>
+    <rect width="512" height="512" fill="url(#gc)"/>
+    <path d="M136 150h240a40 40 0 0 1 40 40v120a40 40 0 0 1-40 40H250l-62 52v-52h-52a40 40 0 0 1-40-40V190a40 40 0 0 1 40-40z" fill="#fff"/>
+    <text x="256" y="236" text-anchor="middle" font-size="58" font-weight="800" fill="#1f6fb8" font-family="Segoe UI, Arial">Куда</text>
+    <text x="256" y="300" text-anchor="middle" font-size="58" font-weight="800" fill="#1f6fb8" font-family="Segoe UI, Arial">идём?</text>
+  </svg>
+</div>
+
+<!-- Картинка в пустом чате 640×360 -->
+<div class="art cover" id="cover">
+  <svg width="640" height="360" viewBox="0 0 640 360">
+    <defs><linearGradient id="gv" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a9be6"/><stop offset="1" stop-color="#1c64a8"/></linearGradient></defs>
+    <rect width="640" height="360" fill="url(#gv)"/>
+    <text x="40" y="118" font-size="52" font-weight="800" fill="#fff" font-family="Segoe UI, Arial">Куда идём?</text>
+    <text x="40" y="162" font-size="22" fill="#e3f0fb" font-family="Segoe UI, Arial">Место, которое подойдёт всем</text>
+    <g font-family="Segoe UI, Arial" font-size="18" fill="#ffffff">
+      <circle cx="54" cy="214" r="14" fill="#ffffff33"/><text x="54" y="220" text-anchor="middle" font-weight="700">1</text><text x="80" y="220">Зовёте друзей в чат</text>
+      <circle cx="54" cy="254" r="14" fill="#ffffff33"/><text x="54" y="260" text-anchor="middle" font-weight="700">2</text><text x="80" y="260">Каждый отвечает на 4 вопроса</text>
+      <circle cx="54" cy="294" r="14" fill="#ffffff33"/><text x="54" y="300" text-anchor="middle" font-weight="700">3</text><text x="80" y="300">Голосуете за одно из 5 мест</text>
+    </g>
+    <!-- карточки мест -->
+    <g font-family="Segoe UI, Arial">
+      <rect x="402" y="70" width="206" height="62" rx="14" fill="#ffffff" opacity=".55"/>
+      <rect x="392" y="142" width="216" height="70" rx="14" fill="#ffffff"/>
+      <text x="410" y="172" font-size="17" font-weight="700" fill="#111">Кинотеатр «Победа»</text>
+      <text x="410" y="196" font-size="14" fill="#8a8a8e">Центр · ~300 ₽</text>
+      <rect x="520" y="182" width="74" height="22" rx="11" fill="#2481cc"/><text x="557" y="198" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">✓ 3 голоса</text>
+      <rect x="402" y="222" width="206" height="62" rx="14" fill="#ffffff" opacity=".55"/>
+      <rect x="412" y="294" width="186" height="40" rx="14" fill="#ffffff" opacity=".3"/>
+    </g>
+  </svg>
+</div>
+</body>
+</html>

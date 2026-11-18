@@ -43,6 +43,13 @@
       "when": 1795011971850,
       "tag": "0005_cool_tyrannus",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795013589019,
+      "tag": "0006_clammy_pandemic",
+      "breakpoints": true
     }
   ]
 }

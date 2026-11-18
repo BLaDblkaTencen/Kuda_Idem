@@ -55,5 +55,12 @@ export const MIGRATIONS: ReadonlyArray<{ tag: string; statements: readonly strin
     "statements": [
       "ALTER TABLE \"users\" ADD COLUMN \"last_prompt_message_id\" integer;"
     ]
+  },
+  {
+    "tag": "0006_clammy_pandemic",
+    "statements": [
+      "ALTER TABLE \"places\" DROP COLUMN \"vibes\";",
+      "ALTER TABLE \"places\" DROP COLUMN \"no_order_ok\";"
+    ]
   }
 ];

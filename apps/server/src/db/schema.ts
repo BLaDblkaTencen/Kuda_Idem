@@ -30,10 +30,8 @@ export const places = pgTable('places', {
   lon: doublePrecision('lon'),
   avgCheck: integer('avg_check').notNull(), // ₽ на человека, 0 = бесплатно
   moods: text('moods').array().notNull().default([]),
-  vibes: text('vibes').array().notNull().default([]),
   features: text('features').array().notNull().default([]),
   maxGroupSize: integer('max_group_size').notNull().default(6),
-  noOrderOk: boolean('no_order_ok').notNull().default(false),
   hours: jsonb('hours').$type<WeeklyHours | null>(), // null = открыто всегда (парк, набережная)
   season: text('season').notNull().default('all_year'),
   description: text('description').notNull().default(''),

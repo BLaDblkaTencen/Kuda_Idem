@@ -6,8 +6,8 @@ import { parseWeeklyHours } from './hours.js';
 // Каждая ошибка сообщается с номером строки, чтобы её было легко найти в Excel.
 
 const COLUMNS = [
-  'название', 'тип', 'вид', 'район', 'адрес', 'широта', 'долгота', 'чек_руб', 'настроения', 'атмосфера',
-  'особенности', 'макс_компания', 'можно_без_заказа', 'часы', 'сезон', 'описание', 'источник_2гис', 'сайт',
+  'название', 'тип', 'вид', 'район', 'адрес', 'широта', 'долгота', 'чек_руб', 'настроения',
+  'особенности', 'макс_компания', 'часы', 'сезон', 'описание', 'источник_2гис', 'сайт',
 ] as const;
 
 /** Минимальный разбор CSV: разделитель «;», поля в кавычках могут содержать «;» и переносы. */
@@ -84,8 +84,6 @@ export function parsePlacesCsv(text: string, verifiedAt: string): NewPlace[] {
     const kind = get('вид'); // как написано в таблице: «кинотеатр», «VR-арена»
     if (!kind) throw new Error(`Строка ${line} («${name}»): пустой «вид» — например «кинотеатр» или «пиццерия»`);
 
-    const noOrder = get('можно_без_заказа').toLowerCase();
-    if (!['да', 'нет'].includes(noOrder)) throw new Error(`Строка ${line}: «можно_без_заказа» — «да» или «нет»`);
 
     return {
       city: 'sevastopol',
@@ -99,10 +97,8 @@ export function parsePlacesCsv(text: string, verifiedAt: string): NewPlace[] {
       lon: num('долгота'),
       avgCheck: num('чек_руб'),
       moods: checkKeys(list(get('настроения')), MOODS, 'настроения', line),
-      vibes: list(get('атмосфера')),
       features: checkKeys(list(get('особенности')), FEATURES, 'особенности', line),
       maxGroupSize: num('макс_компания'),
-      noOrderOk: noOrder === 'да',
       hours,
       season: checkKeys([get('сезон') || 'all_year'], SEASONS, 'сезон', line)[0]!,
       description: get('описание'),

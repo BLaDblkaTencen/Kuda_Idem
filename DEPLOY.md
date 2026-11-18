@@ -72,13 +72,17 @@ npx wrangler secret put BOT_TOKEN
 ```
 
 В логах (dash.cloudflare.com → Workers & Pages → kuda-idem → Logs, или `npx wrangler tail`):
-`Применено миграций: N` (только когда есть новые) и `Вебхук бота подключён`.
+`Применено миграций: N` (только когда есть новые), `Вебхук бота подключён` и
+`Профиль бота обновлён: …` (только когда тексты из `bot-profile.ts` изменились).
 Проверить места: `https://<адрес>/api/places` — список реальных мест из таблицы.
 
 ## 6. Telegram
 
-1. @BotFather → `/mybots` → бот → **Bot Settings → Configure Mini App** → адрес из шага 3. Он постоянный.
-2. В чате с ботом — `/start`. Кнопка меню «Куда идём?» обновится сама.
+1. @BotFather → `/mybots` → бот → **Bot Settings → Configure Mini App → Enable Mini App** → адрес из шага 3.
+   Он постоянный. Без этого ссылки-приглашения `t.me/<бот>?startapp=…` откроют чат, а не вылазку.
+2. @BotFather → **Edit Bot → Edit Botpic** — аватарка (`design/bot/avatar-*.png`),
+   **Edit Description Picture** — картинка в пустом чате (`design/bot/cover.png`).
+3. В чате с ботом — `/start`. Кнопка меню «Куда идём?», имя, описания и команды бот выставит сам.
 
 ## Обновления
 

@@ -13,9 +13,7 @@ export interface PlaceCard {
   address: string;
   avgCheck: number;
   isFree: boolean;
-  vibes: string[];
   features: string[];
-  noOrderOk: boolean;
   description: string;
   photos: string[];
   mapsUrl: string;

@@ -17,16 +17,11 @@ export const PLACES: NewPlace[] = [
       "eat",
       "chill"
     ],
-    "vibes": [
-      "уютно",
-      "тихо"
-    ],
     "features": [
       "vegetarian_menu",
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 10,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "09:00",
@@ -79,17 +74,12 @@ export const PLACES: NewPlace[] = [
       "chill",
       "eat"
     ],
-    "vibes": [
-      "уютно",
-      "с видом"
-    ],
     "features": [
       "vegetarian_menu",
       "non_alcoholic_menu",
       "sea_view"
     ],
     "maxGroupSize": 8,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "09:00",
@@ -141,17 +131,12 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "eat"
     ],
-    "vibes": [
-      "для компании",
-      "просто"
-    ],
     "features": [
       "vegetarian_menu",
       "non_alcoholic_menu",
       "big_tables"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "10:00",
@@ -203,17 +188,12 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "party"
     ],
-    "vibes": [
-      "шумно",
-      "танцы"
-    ],
     "features": [
       "hookah",
       "adults_only",
       "dance_floor"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "18:00",
@@ -266,15 +246,11 @@ export const PLACES: NewPlace[] = [
       "eat",
       "chill"
     ],
-    "vibes": [
-      "для компании"
-    ],
     "features": [
       "non_alcoholic_menu",
       "big_tables"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "11:00",
@@ -327,17 +303,12 @@ export const PLACES: NewPlace[] = [
       "eat",
       "chill"
     ],
-    "vibes": [
-      "с видом",
-      "для компании"
-    ],
     "features": [
       "non_alcoholic_menu",
       "sea_view",
       "big_tables"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "10:30",
@@ -390,10 +361,6 @@ export const PLACES: NewPlace[] = [
       "party",
       "play"
     ],
-    "vibes": [
-      "шумно",
-      "для компании"
-    ],
     "features": [
       "karaoke",
       "dance_floor",
@@ -402,7 +369,6 @@ export const PLACES: NewPlace[] = [
       "big_tables"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "17:00",
@@ -454,16 +420,11 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "eat"
     ],
-    "vibes": [
-      "просто",
-      "дёшево"
-    ],
     "features": [
       "non_alcoholic_menu",
       "big_tables"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "10:00",
@@ -516,16 +477,11 @@ export const PLACES: NewPlace[] = [
       "eat",
       "party"
     ],
-    "vibes": [
-      "для компании",
-      "шумно"
-    ],
     "features": [
       "non_alcoholic_menu",
       "dance_floor"
     ],
     "maxGroupSize": 12,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "10:00",
@@ -577,16 +533,11 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "eat"
     ],
-    "vibes": [
-      "просто",
-      "для компании"
-    ],
     "features": [
       "vegetarian_menu",
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "09:00",
@@ -639,15 +590,11 @@ export const PLACES: NewPlace[] = [
       "eat",
       "chill"
     ],
-    "vibes": [
-      "для компании"
-    ],
     "features": [
       "non_alcoholic_menu",
       "big_tables"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "11:00",
@@ -700,16 +647,11 @@ export const PLACES: NewPlace[] = [
       "chill",
       "eat"
     ],
-    "vibes": [
-      "уютно",
-      "спокойно"
-    ],
     "features": [
       "vegetarian_menu",
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "08:00",
@@ -763,10 +705,6 @@ export const PLACES: NewPlace[] = [
       "party",
       "play"
     ],
-    "vibes": [
-      "для компании",
-      "шумно"
-    ],
     "features": [
       "vegetarian_menu",
       "non_alcoholic_menu",
@@ -775,7 +713,6 @@ export const PLACES: NewPlace[] = [
       "big_tables"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "11:00",
@@ -827,15 +764,11 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "eat"
     ],
-    "vibes": [
-      "для компании"
-    ],
     "features": [
       "non_alcoholic_menu",
       "big_tables"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "12:00",
@@ -888,10 +821,6 @@ export const PLACES: NewPlace[] = [
       "eat",
       "party"
     ],
-    "vibes": [
-      "для компании",
-      "с видом"
-    ],
     "features": [
       "non_alcoholic_menu",
       "sea_view",
@@ -899,7 +828,6 @@ export const PLACES: NewPlace[] = [
       "big_tables"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "12:00",
@@ -952,16 +880,11 @@ export const PLACES: NewPlace[] = [
       "eat",
       "chill"
     ],
-    "vibes": [
-      "с видом",
-      "романтично"
-    ],
     "features": [
       "non_alcoholic_menu",
       "sea_view"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "10:00",
@@ -1013,14 +936,10 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "play"
     ],
-    "vibes": [
-      "для компании"
-    ],
     "features": [
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 8,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "12:00",
@@ -1074,9 +993,6 @@ export const PLACES: NewPlace[] = [
       "party",
       "chill"
     ],
-    "vibes": [
-      "для компании"
-    ],
     "features": [
       "vegetarian_menu",
       "non_alcoholic_menu",
@@ -1084,7 +1000,6 @@ export const PLACES: NewPlace[] = [
       "big_tables"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "11:00",
@@ -1136,14 +1051,10 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "chill"
     ],
-    "vibes": [
-      "спокойно"
-    ],
     "features": [
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "09:00",
@@ -1196,15 +1107,11 @@ export const PLACES: NewPlace[] = [
       "play",
       "chill"
     ],
-    "vibes": [
-      "для компании"
-    ],
     "features": [
       "board_games",
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 12,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "14:00",
@@ -1256,14 +1163,10 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "chill"
     ],
-    "vibes": [
-      "спокойно"
-    ],
     "features": [
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "10:00",
@@ -1315,14 +1218,10 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "chill"
     ],
-    "vibes": [
-      "спокойно"
-    ],
     "features": [
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "10:00",
@@ -1375,16 +1274,11 @@ export const PLACES: NewPlace[] = [
       "eat",
       "party"
     ],
-    "vibes": [
-      "для компании",
-      "шумно"
-    ],
     "features": [
       "non_alcoholic_menu",
       "big_tables"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "11:00",
@@ -1436,13 +1330,8 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "play"
     ],
-    "vibes": [
-      "азартно",
-      "для компании"
-    ],
     "features": [],
     "maxGroupSize": 8,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "11:00",
@@ -1495,16 +1384,11 @@ export const PLACES: NewPlace[] = [
       "outdoor",
       "chill"
     ],
-    "vibes": [
-      "спокойно",
-      "с видом"
-    ],
     "features": [
       "no_food",
       "sea_view"
     ],
     "maxGroupSize": 30,
-    "noOrderOk": true,
     "hours": null,
     "season": "all_year",
     "description": "Главный бульвар города у моря: Памятник затопленным кораблям, набережная, закаты.",
@@ -1528,15 +1412,10 @@ export const PLACES: NewPlace[] = [
       "outdoor",
       "chill"
     ],
-    "vibes": [
-      "спокойно",
-      "зелено"
-    ],
     "features": [
       "no_food"
     ],
     "maxGroupSize": 30,
-    "noOrderOk": true,
     "hours": null,
     "season": "all_year",
     "description": "Парк на холме в центре: аллеи, Панорама, колесо обозрения и карусели.",
@@ -1560,16 +1439,11 @@ export const PLACES: NewPlace[] = [
       "outdoor",
       "chill"
     ],
-    "vibes": [
-      "спокойно",
-      "у моря"
-    ],
     "features": [
       "no_food",
       "sea_view"
     ],
     "maxGroupSize": 30,
-    "noOrderOk": true,
     "hours": null,
     "season": "all_year",
     "description": "Большой парк у моря на Гагаринском: аллеи, фонтаны, выход к пляжу.",
@@ -1580,31 +1454,27 @@ export const PLACES: NewPlace[] = [
   },
   {
     "city": "sevastopol",
-    "externalId": "70030076131596639",
-    "name": "Парк им. 60-летия СССР",
+    "externalId": "70000001065074267",
+    "name": "Учкуевка",
     "type": "park",
     "kind": "парк",
-    "district": "ostryaki",
-    "address": "Парк им. 60-летия СССР",
-    "lat": 44.577755,
-    "lon": 33.517021,
+    "district": "severnaya",
+    "address": "Парк Учкуевка, Северная сторона",
+    "lat": 44.642101,
+    "lon": 33.5402,
     "avgCheck": 0,
     "moods": [
       "outdoor",
       "chill"
     ],
-    "vibes": [
-      "спокойно",
-      "зелено"
-    ],
     "features": [
-      "no_food"
+      "no_food",
+      "sea_view"
     ],
     "maxGroupSize": 30,
-    "noOrderOk": true,
     "hours": null,
     "season": "all_year",
-    "description": "Тихий зелёный парк для прогулки.",
+    "description": "Парк у моря на Северной стороне: велодорожки, скейт-парк, площадка для воркаута.",
     "website": null,
     "verifiedAt": "2026-11-18",
     "isTestData": false,
@@ -1625,15 +1495,10 @@ export const PLACES: NewPlace[] = [
       "outdoor",
       "chill"
     ],
-    "vibes": [
-      "спокойно",
-      "с видом"
-    ],
     "features": [
       "no_food"
     ],
     "maxGroupSize": 30,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "07:00",
@@ -1686,15 +1551,10 @@ export const PLACES: NewPlace[] = [
       "outdoor",
       "chill"
     ],
-    "vibes": [
-      "спокойно",
-      "зелено"
-    ],
     "features": [
       "no_food"
     ],
     "maxGroupSize": 30,
-    "noOrderOk": true,
     "hours": null,
     "season": "all_year",
     "description": "Парк в балке на Корабельной стороне.",
@@ -1718,16 +1578,11 @@ export const PLACES: NewPlace[] = [
       "outdoor",
       "chill"
     ],
-    "vibes": [
-      "спокойно",
-      "с видом"
-    ],
     "features": [
       "no_food",
       "sea_view"
     ],
     "maxGroupSize": 30,
-    "noOrderOk": true,
     "hours": null,
     "season": "all_year",
     "description": "Прогулка вдоль Балаклавской бухты: яхты, кафе, вид на Чембало.",
@@ -1751,15 +1606,11 @@ export const PLACES: NewPlace[] = [
       "outdoor",
       "chill"
     ],
-    "vibes": [
-      "с видом"
-    ],
     "features": [
       "no_food",
       "sea_view"
     ],
     "maxGroupSize": 20,
-    "noOrderOk": true,
     "hours": null,
     "season": "all_year",
     "description": "Руины генуэзской крепости на скале над бухтой: подъём и виды на море.",
@@ -1783,17 +1634,12 @@ export const PLACES: NewPlace[] = [
       "eat",
       "party"
     ],
-    "vibes": [
-      "уютно",
-      "с видом"
-    ],
     "features": [
       "non_alcoholic_menu",
       "dance_floor",
       "big_tables"
     ],
     "maxGroupSize": 12,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "10:00",
@@ -1845,16 +1691,11 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "party"
     ],
-    "vibes": [
-      "шумно",
-      "для компании"
-    ],
     "features": [
       "non_alcoholic_menu",
       "dance_floor"
     ],
     "maxGroupSize": 10,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "18:00",
@@ -1907,15 +1748,10 @@ export const PLACES: NewPlace[] = [
       "eat",
       "chill"
     ],
-    "vibes": [
-      "уютно",
-      "тихо"
-    ],
     "features": [
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 10,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "08:30",
@@ -1968,16 +1804,11 @@ export const PLACES: NewPlace[] = [
       "play",
       "chill"
     ],
-    "vibes": [
-      "уютно",
-      "для компании"
-    ],
     "features": [
       "board_games",
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "12:00",
@@ -2030,16 +1861,11 @@ export const PLACES: NewPlace[] = [
       "chill",
       "party"
     ],
-    "vibes": [
-      "уютно",
-      "для компании"
-    ],
     "features": [
       "hookah",
       "adults_only"
     ],
     "maxGroupSize": 8,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "00:00",
@@ -2092,16 +1918,11 @@ export const PLACES: NewPlace[] = [
       "chill",
       "party"
     ],
-    "vibes": [
-      "уютно",
-      "для компании"
-    ],
     "features": [
       "hookah",
       "adults_only"
     ],
     "maxGroupSize": 10,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "12:00",
@@ -2153,15 +1974,10 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "play"
     ],
-    "vibes": [
-      "азартно",
-      "для компании"
-    ],
     "features": [
       "no_food"
     ],
     "maxGroupSize": 10,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "10:00",
@@ -2213,15 +2029,10 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "play"
     ],
-    "vibes": [
-      "азартно",
-      "для компании"
-    ],
     "features": [
       "no_food"
     ],
     "maxGroupSize": 6,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "10:00",
@@ -2274,15 +2085,10 @@ export const PLACES: NewPlace[] = [
       "play",
       "outdoor"
     ],
-    "vibes": [
-      "весело",
-      "для компании"
-    ],
     "features": [
       "no_food"
     ],
     "maxGroupSize": 20,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "10:00",
@@ -2335,15 +2141,10 @@ export const PLACES: NewPlace[] = [
       "eat",
       "chill"
     ],
-    "vibes": [
-      "уютно",
-      "тихо"
-    ],
     "features": [
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 8,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "12:00",
@@ -2396,17 +2197,12 @@ export const PLACES: NewPlace[] = [
       "chill",
       "play"
     ],
-    "vibes": [
-      "уютно",
-      "для компании"
-    ],
     "features": [
       "karaoke",
       "board_games",
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": true,
     "hours": null,
     "season": "all_year",
     "description": "Антикинотеатр: свой зал для компании, фильмы, караоке и настольные игры.",
@@ -2430,10 +2226,6 @@ export const PLACES: NewPlace[] = [
       "eat",
       "party"
     ],
-    "vibes": [
-      "шумно",
-      "для компании"
-    ],
     "features": [
       "non_alcoholic_menu",
       "board_games",
@@ -2441,7 +2233,6 @@ export const PLACES: NewPlace[] = [
       "big_tables"
     ],
     "maxGroupSize": 20,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "12:00",
@@ -2493,15 +2284,10 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "play"
     ],
-    "vibes": [
-      "азартно",
-      "для компании"
-    ],
     "features": [
       "no_food"
     ],
     "maxGroupSize": 8,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "10:00",
@@ -2553,15 +2339,10 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "eat"
     ],
-    "vibes": [
-      "просто",
-      "по-домашнему"
-    ],
     "features": [
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "10:00",
@@ -2614,14 +2395,10 @@ export const PLACES: NewPlace[] = [
       "eat",
       "chill"
     ],
-    "vibes": [
-      "уютно"
-    ],
     "features": [
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 8,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "09:00",
@@ -2673,15 +2450,10 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "play"
     ],
-    "vibes": [
-      "азартно",
-      "для компании"
-    ],
     "features": [
       "no_food"
     ],
     "maxGroupSize": 8,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "09:00",
@@ -2733,16 +2505,11 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "chill"
     ],
-    "vibes": [
-      "спокойно",
-      "познавательно"
-    ],
     "features": [
       "no_food",
       "sea_view"
     ],
     "maxGroupSize": 30,
-    "noOrderOk": true,
     "hours": [
       {
         "open": "09:00",
@@ -2794,15 +2561,10 @@ export const PLACES: NewPlace[] = [
     "moods": [
       "eat"
     ],
-    "vibes": [
-      "просто",
-      "для компании"
-    ],
     "features": [
       "non_alcoholic_menu"
     ],
     "maxGroupSize": 15,
-    "noOrderOk": false,
     "hours": [
       {
         "open": "08:00",
